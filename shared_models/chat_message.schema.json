@@ -1,0 +1,12 @@
+{
+  "title": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "sender_id": { "type": "string" },
+    "message": { "type": "string" },
+    "translated_message": { "type": "string" },
+    "type": { "type": "string", "enum": ["text", "image", "location"] },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["sender_id", "message", "translated_message", "type", "created_at"]
+}

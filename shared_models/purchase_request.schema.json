@@ -1,0 +1,14 @@
+{
+  "title": "PurchaseRequest",
+  "type": "object",
+  "properties": {
+    "from_user_id": { "type": "string" },
+    "to_user_id": { "type": "string" },
+    "type": { "type": "string" },
+    "item_description": { "type": "string" },
+    "status": { "type": "string", "enum": ["pending", "accepted", "rejected", "completed"] },
+    "payment_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["from_user_id", "to_user_id", "type", "item_description", "status", "payment_id", "created_at"]
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Local",
+  "type": "object",
+  "properties": {
+    "certified": { "type": "boolean" },
+    "age": { "type": "integer" },
+    "gender": { "type": "string", "enum": ["남", "여", "기타"] },
+    "preferred_meetup": { "type": "string", "enum": ["온", "오프", "둘 다"] },
+    "preferred_location": { "type": "string" },
+    "interests": { "type": "array", "items": { "type": "string" } },
+    "hobbies": { "type": "string" },
+    "verification_data": {
+      "type": "object",
+      "properties": { "ocr_id_image": { "type": "string" } }
+    },
+    "verification_status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["certified", "age", "gender", "preferred_meetup", "preferred_location", "interests", "hobbies", "verification_data", "verification_status", "created_at", "updated_at"]
+}

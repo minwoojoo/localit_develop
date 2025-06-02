@@ -1,0 +1,18 @@
+{
+  "title": "Payment",
+  "type": "object",
+  "properties": {
+    "payer_id": { "type": "string" },
+    "receiver_id": { "type": "string" },
+    "type": { "type": "string", "enum": ["guide_fee", "reservation_fee"] },
+    "amount": { "type": "integer" },
+    "status": { "type": "string", "enum": ["completed", "pending", "failed", "refunded"] },
+    "method": { "type": "string", "enum": ["card", "kakaopay", "naverpay"] },
+    "related_matching_id": { "type": "string" },
+    "related_guide_id": { "type": "string" },
+    "paid_at": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["payer_id", "receiver_id", "type", "amount", "status", "method", "paid_at", "created_at", "updated_at"]
+}

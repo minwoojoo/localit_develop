@@ -1,0 +1,90 @@
+### 회원가입
+POST http://localhost:5001/localit-ef984/asia-northeast3/registerUser
+Content-Type: application/json
+
+{
+  "data": {
+    "uid": "test123",
+    "email": "test@example.com",
+    "nickname": "테스트유저",
+    "type": "traveler",
+    "phone_number": "010-1234-5678",
+    "languages": ["한국어", "영어"]
+  }
+}
+
+### 사용자 정보 조회
+POST http://localhost:5001/localit-ef984/asia-northeast3/getUserProfile
+Content-Type: application/json
+
+{
+  "data": {
+    "uid": "test123"
+  }
+}
+
+### 사용자 정보 수정
+POST http://localhost:5001/localit-ef984/asia-northeast3/updateUserProfile
+Content-Type: application/json
+
+{
+  "data": {
+    "uid": "test123",
+    "nickname": "수정된닉네임",
+    "languages": ["한국어", "영어", "일본어"]
+  }
+}
+
+### 매칭 요청
+POST http://localhost:5001/localit-ef984/asia-northeast3/requestMatching
+Content-Type: application/json
+
+{
+  "data": {
+    "requester_id": "user123",
+    "receiver_id": "local456",
+    "travel_info": {
+      "start_date": "2024-03-20",
+      "end_date": "2024-03-25",
+      "location": "서울",
+      "preferences": ["맛집", "문화"]
+    }
+  }
+}
+
+### 매칭 수락
+POST http://localhost:5001/localit-ef984/asia-northeast3/acceptMatching
+Content-Type: application/json
+
+{
+  "data": {
+    "matchingId": "matching123"
+  }
+}
+
+### 채팅 메시지 전송
+POST http://localhost:5001/localit-ef984/asia-northeast3/postMessage
+Content-Type: application/json
+
+{
+  "data": {
+    "chat_room_id": "room123",
+    "sender_id": "user123",
+    "message": "안녕하세요!"
+  }
+}
+
+### 여행객 소개글 등록
+POST http://localhost:5001/localit-ef984/asia-northeast3/postTravelerIntro
+Content-Type: application/json
+
+{
+  "data": {
+    "traveler_id": "user123",
+    "title": "서울 여행 같이 해요!",
+    "content": "3월 20일부터 25일까지 서울 여행 계획 중입니다.",
+    "location": "서울",
+    "preferred_meetup": "홍대",
+    "travel_theme": ["맛집", "문화"]
+  }
+} 

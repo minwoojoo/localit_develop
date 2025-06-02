@@ -1,0 +1,11 @@
+{
+  "title": "ChatRoom",
+  "type": "object",
+  "properties": {
+    "traveler_id": { "type": "string" },
+    "local_id": { "type": "string" },
+    "related_match_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["traveler_id", "local_id", "related_match_id", "created_at"]
+}

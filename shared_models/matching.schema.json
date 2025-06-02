@@ -1,0 +1,15 @@
+{
+  "title": "Matching",
+  "type": "object",
+  "properties": {
+    "requester_id": { "type": "string" },
+    "receiver_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+    "preferred_date": { "type": "string", "format": "date" },
+    "location": { "type": "string" },
+    "message": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["requester_id", "receiver_id", "status", "preferred_date", "location", "message", "created_at", "updated_at"]
+}

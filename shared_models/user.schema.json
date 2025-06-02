@@ -1,0 +1,16 @@
+{
+    "title": "User",
+    "type": "object",
+    "properties": {
+      "email": { "type": "string" },
+      "nickname": { "type": "string" },
+      "phone_number": { "type": "string" },
+      "type": { "type": "string", "enum": ["traveler", "local"] },
+      "profileImageUrl": { "type": "string" },
+      "languages": { "type": "array", "items": { "type": "string" } },
+      "trust_score": { "type": "integer" },
+      "created_at": { "type": "string", "format": "date-time" },
+      "updated_at": { "type": "string", "format": "date-time" }
+    },
+    "required": ["email", "nickname", "type", "created_at", "updated_at"]
+  }

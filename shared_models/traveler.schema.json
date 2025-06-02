@@ -1,0 +1,11 @@
+{
+  "title": "Traveler",
+  "type": "object",
+  "properties": {
+    "preferred_regions": { "type": "array", "items": { "type": "string" } },
+    "travel_style": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["preferred_regions", "travel_style", "created_at", "updated_at"]
+}

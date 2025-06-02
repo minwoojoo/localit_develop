@@ -1,0 +1,14 @@
+{
+  "title": "Review",
+  "type": "object",
+  "properties": {
+    "from_user_id": { "type": "string" },
+    "to_user_id": { "type": "string" },
+    "related_service": { "type": "string", "enum": ["guide", "purchase"] },
+    "related_id": { "type": "string" },
+    "rating": { "type": "integer" },
+    "comment": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["from_user_id", "to_user_id", "related_service", "related_id", "rating", "comment", "created_at"]
+}

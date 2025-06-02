@@ -1,0 +1,15 @@
+{
+  "title": "GuideRequest",
+  "type": "object",
+  "properties": {
+    "from_user_id": { "type": "string" },
+    "to_user_id": { "type": "string" },
+    "meeting_location": { "type": "string" },
+    "scheduled_time": { "type": "string", "format": "date-time" },
+    "duration": { "type": "string" },
+    "status": { "type": "string", "enum": ["pending", "accepted", "completed"] },
+    "fee": { "type": "integer" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["from_user_id", "to_user_id", "meeting_location", "scheduled_time", "duration", "status", "fee", "created_at"]
+}
