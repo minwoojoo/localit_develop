@@ -25,17 +25,31 @@ class DefaultFirebaseOptions {
     );
   }
 
-  static FirebaseOptions get web => FirebaseOptions(
-        apiKey: dotenv.env['FIREBASE_API_KEY_WEB'] ??
-            'AIzaSyDAEj6BQLp_qQOC5i67aEzSf2wCzGsFtIM',
-        appId: dotenv.env['FIREBASE_APP_ID_WEB'] ??
-            '1:797143078447:web:e69e938839756ded9c58da',
-        messagingSenderId:
-            dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '797143078447',
-        projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'localit-ef984',
-        authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ??
-            'localit-ef984.firebaseapp.com',
-        storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
-            'localit-ef984.firebasestorage.app',
-      );
+  static FirebaseOptions get web {
+    final apiKey = dotenv.env['FIREBASE_API_KEY_WEB'];
+    final appId = dotenv.env['FIREBASE_APP_ID_WEB'];
+    final messagingSenderId = dotenv.env['FIREBASE_MESSAGING_SENDER_ID'];
+    final projectId = dotenv.env['FIREBASE_PROJECT_ID'];
+    final authDomain = dotenv.env['FIREBASE_AUTH_DOMAIN'];
+    final storageBucket = dotenv.env['FIREBASE_STORAGE_BUCKET'];
+
+    if (apiKey == null ||
+        appId == null ||
+        messagingSenderId == null ||
+        projectId == null ||
+        authDomain == null ||
+        storageBucket == null) {
+      throw Exception('Firebase configuration not found in .env file. '
+          'Please check your .env file contains all required Firebase variables.');
+    }
+
+    return FirebaseOptions(
+      apiKey: apiKey,
+      appId: appId,
+      messagingSenderId: messagingSenderId,
+      projectId: projectId,
+      authDomain: authDomain,
+      storageBucket: storageBucket,
+    );
+  }
 }
