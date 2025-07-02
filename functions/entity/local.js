@@ -30,4 +30,4 @@ class Local {
   }
 }
 
-module.exports = Local; 
+module.exports = Local;

@@ -26,7 +26,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black),
                     children: [
-                      TextSpan(text: 'Lo'),
+                      TextSpan(text: 'L'),
                       WidgetSpan(
                         child: Icon(Icons.place, color: Colors.blue, size: 32),
                       ),
@@ -38,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  '신뢰할 수 없는 현지인들의 실제 여행 정보',
+                  '신뢰할 수 있는 현지인들의 실제 여행 정보',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),

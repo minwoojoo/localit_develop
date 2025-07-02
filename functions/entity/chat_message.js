@@ -18,4 +18,4 @@ class ChatMessage {
   }
 }
 
-module.exports = ChatMessage; 
+module.exports = ChatMessage;

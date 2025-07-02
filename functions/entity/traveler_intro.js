@@ -24,4 +24,4 @@ class TravelerIntro {
   }
 }
 
-module.exports = TravelerIntro; 
+module.exports = TravelerIntro;

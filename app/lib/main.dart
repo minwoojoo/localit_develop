@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:localit/screens/home_screen.dart';
-import 'package:localit/screens/explore_screen.dart';
-import 'package:localit/screens/chat_screen.dart';
-import 'package:localit/screens/profile_screen.dart';
-import 'package:localit/screens/menu_screen.dart';
-import 'package:localit/screens/onboarding_screen.dart';
-import 'package:localit/screens/login_screen.dart';
-import 'package:localit/screens/purchase_screen.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
+import 'package:localit/screens/auth/profile_screen.dart';
+import 'package:localit/screens/common/menu_screen.dart';
+import 'package:localit/screens/auth/onboarding_screen.dart';
+import 'package:localit/screens/auth/login_screen.dart';
+import 'package:localit/screens/commerce/purchase_screen.dart';
 
 void main() {
   runApp(const MyApp());

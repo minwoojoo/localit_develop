@@ -16,4 +16,4 @@ class Traveler {
   }
 }
 
-module.exports = Traveler; 
+module.exports = Traveler;

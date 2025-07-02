@@ -212,7 +212,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ),
                 IconButton(
                   icon: Icon(
-                    _showTranslation ? Icons.translate : Icons.translate_outlined,
+                    _showTranslation
+                        ? Icons.translate
+                        : Icons.translate_outlined,
                   ),
                   onPressed: () {
                     setState(() {
@@ -242,4 +244,4 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _messageController.dispose();
     super.dispose();
   }
-} 
+}

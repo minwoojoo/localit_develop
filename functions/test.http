@@ -1,5 +1,5 @@
 ### 회원가입
-POST http://localhost:5001/localit-ef984/asia-northeast3/registerUser
+POST http://localhost:5001/localit-ef984/us-central1/registerUser
 Content-Type: application/json
 
 {
@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### 사용자 정보 조회
-POST http://localhost:5001/localit-ef984/asia-northeast3/getUserProfile
+POST http://localhost:5001/localit-ef984/us-central1/getUserProfile
 Content-Type: application/json
 
 {
@@ -24,7 +24,7 @@ Content-Type: application/json
 }
 
 ### 사용자 정보 수정
-POST http://localhost:5001/localit-ef984/asia-northeast3/updateUserProfile
+POST http://localhost:5001/localit-ef984/us-central1/updateUserProfile
 Content-Type: application/json
 
 {
@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 
 ### 매칭 요청
-POST http://localhost:5001/localit-ef984/asia-northeast3/requestMatching
+POST http://localhost:5001/localit-ef984/us-central1/requestMatching
 Content-Type: application/json
 
 {
@@ -53,7 +53,7 @@ Content-Type: application/json
 }
 
 ### 매칭 수락
-POST http://localhost:5001/localit-ef984/asia-northeast3/acceptMatching
+POST http://localhost:5001/localit-ef984/us-central1/acceptMatching
 Content-Type: application/json
 
 {
@@ -63,7 +63,7 @@ Content-Type: application/json
 }
 
 ### 채팅 메시지 전송
-POST http://localhost:5001/localit-ef984/asia-northeast3/postMessage
+POST http://localhost:5001/localit-ef984/us-central1/postMessage
 Content-Type: application/json
 
 {
@@ -75,7 +75,7 @@ Content-Type: application/json
 }
 
 ### 여행객 소개글 등록
-POST http://localhost:5001/localit-ef984/asia-northeast3/postTravelerIntro
+POST http://localhost:5001/localit-ef984/us-central1/postTravelerIntro
 Content-Type: application/json
 
 {
