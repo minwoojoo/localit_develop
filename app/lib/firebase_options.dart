@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -19,68 +20,22 @@ class DefaultFirebaseOptions {
     if (kIsWeb) {
       return web;
     }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return android;
-      case TargetPlatform.iOS:
-        return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      default:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
-        );
-    }
+    throw UnsupportedError(
+      'DefaultFirebaseOptions are not supported for this platform.',
+    );
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDAEj6BQLp_qQOC5i67aEzSf2wCzGsFtIM',
-    appId: '1:797143078447:web:e69e938839756ded9c58da',
-    messagingSenderId: '797143078447',
-    projectId: 'localit-ef984',
-    authDomain: 'localit-ef984.firebaseapp.com',
-    storageBucket: 'localit-ef984.firebasestorage.app',
-  );
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDTjDQNb7GuSh2cyVtKsWbXGstQ_koR6w0',
-    appId: '1:797143078447:android:2174d471047508a79c58da',
-    messagingSenderId: '797143078447',
-    projectId: 'localit-ef984',
-    storageBucket: 'localit-ef984.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBF6Ill4Uwgu92aJ0Ru9SxBXBb-PdCz-Vc',
-    appId: '1:797143078447:ios:67fbd654efe063ae9c58da',
-    messagingSenderId: '797143078447',
-    projectId: 'localit-ef984',
-    storageBucket: 'localit-ef984.firebasestorage.app',
-    iosBundleId: 'com.example.app',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBF6Ill4Uwgu92aJ0Ru9SxBXBb-PdCz-Vc',
-    appId: '1:797143078447:ios:67fbd654efe063ae9c58da',
-    messagingSenderId: '797143078447',
-    projectId: 'localit-ef984',
-    storageBucket: 'localit-ef984.firebasestorage.app',
-    iosBundleId: 'com.example.app',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDAEj6BQLp_qQOC5i67aEzSf2wCzGsFtIM',
-    appId: '1:797143078447:web:e426ecedb6ade9349c58da',
-    messagingSenderId: '797143078447',
-    projectId: 'localit-ef984',
-    authDomain: 'localit-ef984.firebaseapp.com',
-    storageBucket: 'localit-ef984.firebasestorage.app',
-  );
+  static FirebaseOptions get web => FirebaseOptions(
+        apiKey: dotenv.env['FIREBASE_API_KEY_WEB'] ??
+            'AIzaSyDAEj6BQLp_qQOC5i67aEzSf2wCzGsFtIM',
+        appId: dotenv.env['FIREBASE_APP_ID_WEB'] ??
+            '1:797143078447:web:e69e938839756ded9c58da',
+        messagingSenderId:
+            dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '797143078447',
+        projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'localit-ef984',
+        authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ??
+            'localit-ef984.firebaseapp.com',
+        storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+            'localit-ef984.firebasestorage.app',
+      );
 }

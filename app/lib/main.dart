@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'firebase_options.dart';
 import 'package:localit/screens/matching/home_screen.dart';
 import 'package:localit/screens/chat/chat_screen.dart';
 import 'package:localit/screens/auth/profile_screen.dart';
@@ -7,7 +10,17 @@ import 'package:localit/screens/auth/onboarding_screen.dart';
 import 'package:localit/screens/auth/login_screen.dart';
 import 'package:localit/screens/commerce/purchase_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
