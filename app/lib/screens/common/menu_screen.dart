@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:localit/screens/auth/profile_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -11,6 +12,23 @@ class MenuScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          _buildSection(
+            title: '프로필',
+            items: [
+              _buildMenuItem(
+                icon: Icons.person,
+                title: '프로필',
+                subtitle: '프로필 보기',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
           _buildSection(
             title: '서비스',
             items: [

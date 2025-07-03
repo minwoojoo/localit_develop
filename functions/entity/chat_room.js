@@ -16,4 +16,4 @@ class ChatRoom {
   }
 }
 
-module.exports = ChatRoom; 
+module.exports = ChatRoom;

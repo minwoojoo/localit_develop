@@ -29,4 +29,4 @@ class Payment {
     this.updated_at = data.updated_at;
   }
 }
-module.exports = Payment; 
+module.exports = Payment;

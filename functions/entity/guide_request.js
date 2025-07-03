@@ -24,4 +24,4 @@ class GuideRequest {
   }
 }
 
-module.exports = GuideRequest; 
+module.exports = GuideRequest;

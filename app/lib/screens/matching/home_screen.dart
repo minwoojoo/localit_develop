@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:localit/screens/explore_screen.dart';
+import 'package:localit/screens/matching/explore_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 20)),
             SizedBox(height: 2),
-            Text('신뢰할 수 없는 현지인들의 여행 정보',
+            Text('신뢰할 수 있있는 현지인들의 여행 정보',
                 style: TextStyle(color: Colors.grey, fontSize: 12)),
           ],
         ),
@@ -40,30 +40,21 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             // 메인 배너 (이미지 대신 텍스트)
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ExploreScreen()),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.blue[100],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.all(16),
-                child: const Text(
-                  '서울사람97님,\nLocalit과 함께 여행을 계획해 보세요',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87),
-                ),
+            Container(
+              width: double.infinity,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.blue[100],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.all(16),
+              child: const Text(
+                '서울사람97님,\nLocalit과 함께 여행을 계획해 보세요',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
               ),
             ),
             const SizedBox(height: 16),
@@ -71,26 +62,36 @@ class HomeScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    height: 80,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('로컬 매칭 찾기',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.blue)),
-                        SizedBox(height: 4),
-                        Text('현지 로컬 메이트와 여행 계획을 함께하세요',
-                            style: TextStyle(fontSize: 12)),
-                      ],
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExploreScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      height: 80,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('로컬 매칭 찾기',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.blue)),
+                          SizedBox(height: 4),
+                          Text('현지 로컬 메이트와 여행 계획을 함께하세요',
+                              style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
