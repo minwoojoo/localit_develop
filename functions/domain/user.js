@@ -1,6 +1,7 @@
 const {db} = require("../config/firebase");
 
 async function createUser(uid, data) {
+  if (!uid) throw new Error("uid is required");
   await db.collection("users").doc(uid).set(data);
 }
 

@@ -8,7 +8,8 @@ import 'package:localit/screens/auth/profile_screen.dart';
 import 'package:localit/screens/common/menu_screen.dart';
 import 'package:localit/screens/auth/onboarding_screen.dart';
 import 'package:localit/screens/auth/login_screen.dart';
-import 'package:localit/screens/commerce/purchase_screen.dart';
+import 'package:localit/screens/commerce/purchase_agency_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,9 +58,9 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const PurchaseScreen(),
+    PurchaseAgencyScreen(),
     const ChatScreen(),
-    const ProfileScreen(),
+    const CommunityHomeScreen(),
     const MenuScreen(),
   ];
 

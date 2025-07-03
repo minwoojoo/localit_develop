@@ -23,30 +23,21 @@ const userController = require("./controller/userController");
 //   response.send("Hello from Firebase!");
 // });
 
-// 예시: registerUser를 onRequest로 export
+// 회원가입
 exports.registerUser = onRequest(authController.registerUser);
+exports.checkEmailDuplicate = onRequest(authController.checkEmailDuplicate);
 
-// 매칭 요청
-exports.requestMatching = onRequest(matchingController.requestMatching);
+// 채팅 관련 (구현 필요시 아래와 같이 추가)
+// exports.sendMessage = onRequest(chatController.sendMessage);
 
-// 매칭 수락
-exports.acceptMatching = onRequest(matchingController.acceptMatching);
+// 여행객 소개글 등록 (구현 필요시 아래와 같이 추가)
+// exports.postTravelerIntro = onRequest(introController.postTravelerIntro);
 
-// 채팅 메시지 전송
-exports.postMessage = onRequest(chatController.postMessage);
+// 매칭 관련 (구현 필요시 아래와 같이 추가)
+// exports.requestMatching = onRequest(matchingController.requestMatching);
 
-// 여행객 소개글 등록
-exports.postTravelerIntro = onRequest(introController.postTravelerIntro);
-
-// 사용자 정보 조회
-exports.getUserProfile = onRequest(async (req, res) => {
-  try {
-    const result = await userController.getUserProfile(req.body);
-    res.status(200).json(result);
-  } catch (e) {
-    res.status(404).json({ error: e.message });
-  }
-});
+// 사용자 정보 조회 (구현 필요시 아래와 같이 추가)
+// exports.getUserProfile = onRequest(userController.getUserProfile);
 
 // 사용자 정보 수정
 exports.updateUserProfile = onRequest(async (req, res) => {
@@ -54,6 +45,6 @@ exports.updateUserProfile = onRequest(async (req, res) => {
     const result = await userController.updateUserProfile(req.body);
     res.status(200).json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({error: e.message});
   }
 });

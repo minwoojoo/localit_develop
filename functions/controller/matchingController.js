@@ -4,9 +4,9 @@ const {db} = require("../config/firebase");
 
 // 매칭 요청
 async function requestMatching(req, res) {
-  console.log('requestMatching req.body:', req.body);
-  console.log('requestMatching req.body.data:', req.body.data);
-  const { requester_id, receiver_id, travel_info } = req.body.data;
+  console.log("requestMatching req.body:", req.body);
+  console.log("requestMatching req.body.data:", req.body.data);
+  const {requester_id, receiver_id, travel_info} = req.body.data;
   const matchingId = await createMatching({
     requester_id,
     receiver_id,

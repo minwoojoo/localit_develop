@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class PurchaseScreen extends StatefulWidget {
-  const PurchaseScreen({super.key});
+class PurchaseAgencyScreen extends StatefulWidget {
+  const PurchaseAgencyScreen({super.key});
 
   @override
-  State<PurchaseScreen> createState() => _PurchaseScreenState();
+  State<PurchaseAgencyScreen> createState() => _PurchaseAgencyScreenState();
 }
 
-class _PurchaseScreenState extends State<PurchaseScreen>
+class _PurchaseAgencyScreenState extends State<PurchaseAgencyScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
