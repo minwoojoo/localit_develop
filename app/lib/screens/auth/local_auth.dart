@@ -3,9 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'local_registration.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
-// 웹에서만 dart:html import
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 
 class LocalAuthScreen extends StatefulWidget {
   const LocalAuthScreen({super.key});
@@ -39,50 +36,74 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
     return input;
   }
 
+  Future<void> _sendVerificationCode() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      final auth = FirebaseAuth.instance;
+      final phone = formatToE164(_phoneController.text);
+      await auth.verifyPhoneNumber(
+        phoneNumber: phone,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await auth.signInWithCredential(credential);
+          setState(() => _isLoading = false);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const LocalRegistrationScreen()),
+          );
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          setState(() => _isLoading = false);
+          String msg;
+          switch (e.code) {
+            case 'invalid-phone-number':
+              msg = '유효하지 않은 전화번호입니다.';
+              break;
+            case 'too-many-requests':
+              msg = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.';
+              break;
+            case 'quota-exceeded':
+              msg = '일일 인증 한도를 초과했습니다.';
+              break;
+            default:
+              msg = '인증 실패: ${e.message}';
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          );
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('인증코드가 전송되었습니다.'), backgroundColor: Colors.green),
+          );
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('인증코드 전송 실패: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget submitButton() {
     return ElevatedButton(
-      onPressed: (!kIsWeb || _isLoading)
+      onPressed: _isLoading
           ? null
           : () async {
-              if (!_formKey.currentState!.validate()) return;
-              setState(() => _isLoading = true);
-              final auth = FirebaseAuth.instance;
-              final phone = formatToE164(_phoneController.text);
-              await auth.verifyPhoneNumber(
-                phoneNumber: phone,
-                verificationCompleted: (PhoneAuthCredential credential) async {
-                  await auth.signInWithCredential(credential);
-                  setState(() => _isLoading = false);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LocalRegistrationScreen()),
-                  );
-                },
-                verificationFailed: (FirebaseAuthException e) {
-                  setState(() => _isLoading = false);
-                  String msg = e.code == 'invalid-phone-number'
-                      ? '유효하지 않은 전화번호입니다.'
-                      : '인증 실패: ${e.message}';
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(msg), backgroundColor: Colors.red),
-                  );
-                },
-                codeSent: (String verificationId, int? resendToken) {
-                  setState(() {
-                    _verificationId = verificationId;
-                    _isLoading = false;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('인증코드가 전송되었습니다.'),
-                        backgroundColor: Colors.green),
-                  );
-                },
-                codeAutoRetrievalTimeout: (String verificationId) {
-                  _verificationId = verificationId;
-                },
-              );
+              await _sendVerificationCode();
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.orange,
@@ -102,7 +123,7 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
 
   Widget verifyButton() {
     return ElevatedButton(
-      onPressed: (!kIsWeb || _isLoading || _verificationId == null)
+      onPressed: (_isLoading || _verificationId == null)
           ? null
           : () async {
               setState(() => _isLoading = true);
@@ -152,72 +173,50 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: kIsWeb
-            ? Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('전화번호 인증',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _phoneController,
-                      enabled: !_isLoading,
-                      decoration: const InputDecoration(
-                        labelText: '전화번호',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone),
-                        hintText: '01012345678 형식으로 입력해주세요',
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '전화번호를 입력하세요';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    submitButton(),
-                    if (_verificationId != null) ...[
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _smsCodeController,
-                        enabled: !_isLoading,
-                        decoration: const InputDecoration(
-                          labelText: '인증코드',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 8),
-                      verifyButton(),
-                    ],
-                    const SizedBox(height: 16),
-                    Container(
-                      width: 300,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: Text('reCAPTCHA가 여기에 표시됩니다'),
-                      ),
-                    ),
-                  ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('전화번호 인증',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                enabled: !_isLoading,
+                decoration: const InputDecoration(
+                  labelText: '전화번호',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.phone),
+                  hintText: '01012345678 형식으로 입력해주세요',
                 ),
-              )
-            : const Center(
-                child: Text(
-                  '앱(모바일)에서는 전화번호 인증이 지원되지 않습니다.',
-                  style:
-                      TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '전화번호를 입력하세요';
+                  }
+                  return null;
+                },
               ),
+              const SizedBox(height: 8),
+              submitButton(),
+              if (_verificationId != null) ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _smsCodeController,
+                  enabled: !_isLoading,
+                  decoration: const InputDecoration(
+                    labelText: '인증코드',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                verifyButton(),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
