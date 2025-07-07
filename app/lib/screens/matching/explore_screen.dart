@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:localit/screens/matching/explore_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -106,38 +108,73 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   // 리스트형 로컬인 게시글
   Widget _buildLocalPostsList() {
-    return ListView.builder(
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: CircleAvatar(radius: 28, backgroundColor: Colors.grey[300]),
-          title:
-              Text('서울윤순바다안에', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('서울대학교 입학사정관 10년차'),
-              Row(
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('locals').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('로컬인 게시글이 없습니다.'));
+        }
+        final docs = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            return ListTile(
+              leading: CircleAvatar(
+                radius: 28,
+                backgroundImage: data['profileImageUrl'] != null
+                    ? NetworkImage(data['profileImageUrl'])
+                    : null,
+                backgroundColor: Colors.grey[300],
+                child: data['profileImageUrl'] == null
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+              ),
+              title: Text(
+                data['nickname'] ?? '닉네임 없음',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.verified, color: Colors.green, size: 16),
-                  SizedBox(width: 4),
-                  Text('신뢰도 100점',
-                      style: TextStyle(color: Colors.green, fontSize: 12)),
+                  Text(data['intro'] ?? '소개글 없음'),
+                  Row(
+                    children: [
+                      Icon(Icons.verified, color: Colors.green, size: 16),
+                      SizedBox(width: 4),
+                      Text(
+                        '신뢰도 ${data['trust_score'] ?? 0}점',
+                        style: TextStyle(color: Colors.green, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('ON/OFF',
-                  style: TextStyle(
-                      color: Colors.red, fontWeight: FontWeight.bold)),
-              SizedBox(height: 4),
-              Icon(Icons.more_vert, size: 18),
-            ],
-          ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('ON/OFF',
+                      style: TextStyle(
+                          color: Colors.red, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  Icon(Icons.more_vert, size: 18),
+                ],
+              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ExploreDetailScreen(localId: docs[index].id),
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );

@@ -19,6 +19,7 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
   final _ageController = TextEditingController();
   final _hobbiesController = TextEditingController();
   final _introductionController = TextEditingController();
+  final _nicknameController = TextEditingController();
   String _selectedGender = '남';
   String _selectedMeetup = '오프';
   String _selectedLocation = 'Hongdae';
@@ -55,6 +56,7 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
     _ageController.dispose();
     _hobbiesController.dispose();
     _introductionController.dispose();
+    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -131,8 +133,9 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
         'preferred_location': _selectedLocation,
         'interests': _selectedInterests,
         'hobbies': _hobbiesController.text.trim(),
+        'nickname': _nicknameController.text.trim(),
         'introduction': _introductionController.text.trim(),
-        'verification_status': 'pending',
+        'verification_status': 'accepted',
         'created_at': FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
         'phone_number': user.phoneNumber,
@@ -187,6 +190,35 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 닉네임 입력
+              const Text(
+                '닉네임(별명)',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nicknameController,
+                decoration: const InputDecoration(
+                  labelText: '닉네임',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person_outline),
+                  hintText: '예: 홍길동, SeoulGuy, 여행왕',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '닉네임을 입력해주세요';
+                  }
+                  if (value.length < 2 || value.length > 12) {
+                    return '닉네임은 2~12자 이내여야 합니다';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
               // 프로필 이미지
               const Text(
                 '프로필 이미지',

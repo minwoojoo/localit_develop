@@ -25,31 +25,12 @@ class DefaultFirebaseOptions {
     );
   }
 
-  static FirebaseOptions get web {
-    final apiKey = dotenv.env['FIREBASE_API_KEY_WEB'];
-    final appId = dotenv.env['FIREBASE_APP_ID_WEB'];
-    final messagingSenderId = dotenv.env['FIREBASE_MESSAGING_SENDER_ID'];
-    final projectId = dotenv.env['FIREBASE_PROJECT_ID'];
-    final authDomain = dotenv.env['FIREBASE_AUTH_DOMAIN'];
-    final storageBucket = dotenv.env['FIREBASE_STORAGE_BUCKET'];
-
-    if (apiKey == null ||
-        appId == null ||
-        messagingSenderId == null ||
-        projectId == null ||
-        authDomain == null ||
-        storageBucket == null) {
-      throw Exception('Firebase configuration not found in .env file. '
-          'Please check your .env file contains all required Firebase variables.');
-    }
-
-    return FirebaseOptions(
-      apiKey: apiKey,
-      appId: appId,
-      messagingSenderId: messagingSenderId,
-      projectId: projectId,
-      authDomain: authDomain,
-      storageBucket: storageBucket,
-    );
-  }
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDAEj6BQLp_qQOC5i67aEzSf2wCzGsFtIM',
+    appId: '1:79714378407:web:e69e983893756ded9c65ba',
+    messagingSenderId: '79714378407',
+    projectId: 'localit-ef984',
+    authDomain: 'localit-ef984.firebaseapp.com',
+    storageBucket: 'localit-ef984.firebasestorage.app',
+  );
 }

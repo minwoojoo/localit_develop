@@ -2,8 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LocalProfileScreen extends StatelessWidget {
+class LocalProfileScreen extends StatefulWidget {
   const LocalProfileScreen({super.key});
+
+  @override
+  State<LocalProfileScreen> createState() => _LocalProfileScreenState();
+}
+
+class _LocalProfileScreenState extends State<LocalProfileScreen> {
+  bool _editing = false;
+  bool _loading = false;
+  final _nicknameController = TextEditingController();
+  final _ageController = TextEditingController();
+  String _selectedGender = '남';
+  String _selectedMeetup = '오프';
+  String _selectedLocation = 'Hongdae';
+  List<String> _selectedInterests = [];
+  final _hobbiesController = TextEditingController();
+  final _introductionController = TextEditingController();
+
+  final List<String> _genderOptions = ['남', '여', '기타'];
+  final List<String> _meetupOptions = ['온', '오프', '둘 다'];
+  final List<String> _locationOptions = [
+    'Hongdae',
+    'Gangnam',
+    'Myeongdong',
+    'Itaewon',
+    'Jongno',
+    'Dongdaemun',
+    'Seoul Station',
+    'Yeouido'
+  ];
+  final List<String> _interestOptions = [
+    'food',
+    'culture',
+    'shopping',
+    'nature',
+    'history',
+    'art',
+    'music',
+    'sports',
+    'technology'
+  ];
+
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    _ageController.dispose();
+    _hobbiesController.dispose();
+    _introductionController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,17 +101,22 @@ class LocalProfileScreen extends StatelessWidget {
             );
           }
 
-          final certified = data['certified'] ?? false;
-          final age = data['age']?.toString() ?? '-';
-          final gender = data['gender'] ?? '-';
-          final preferredMeetup = data['preferred_meetup'] ?? '-';
-          final preferredLocation = data['preferred_location'] ?? '-';
-          final interests =
-              (data['interests'] as List<dynamic>?)?.cast<String>() ?? [];
-          final hobbies = data['hobbies'] ?? '-';
-          final introduction = data['introduction'] ?? '';
-          final profileImageUrl = data['profile_image_url'] ?? '';
+          // 최초 진입 또는 저장 후 컨트롤러/상태 초기화
+          if (!_editing || _loading) {
+            _nicknameController.text = data['nickname'] ?? '';
+            _ageController.text = data['age']?.toString() ?? '';
+            _selectedGender = data['gender'] ?? '남';
+            _selectedMeetup = data['preferred_meetup'] ?? '오프';
+            _selectedLocation = data['preferred_location'] ?? 'Hongdae';
+            _selectedInterests =
+                (data['interests'] as List<dynamic>?)?.cast<String>() ?? [];
+            _hobbiesController.text = data['hobbies'] ?? '';
+            _introductionController.text = data['introduction'] ?? '';
+          }
+
           final verificationStatus = data['verification_status'] ?? 'pending';
+          final certified = verificationStatus == 'accepted';
+          final profileImageUrl = data['profile_image_url'] ?? '';
           final createdAt = data['created_at'] ?? '-';
           final updatedAt = data['updated_at'] ?? '-';
 
@@ -132,12 +186,15 @@ class LocalProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildInfoCard([
-                  _buildInfoRow('나이', age),
-                  _buildInfoRow('성별', gender),
-                  _buildInfoRow('선호 만남 방식', preferredMeetup),
-                  _buildInfoRow('선호 지역', preferredLocation),
-                ]),
+                _editing
+                    ? _buildEditableInfo()
+                    : _buildInfoCard([
+                        _buildInfoRow('닉네임', _nicknameController.text),
+                        _buildInfoRow('나이', _ageController.text),
+                        _buildInfoRow('성별', _selectedGender),
+                        _buildInfoRow('선호 만남 방식', _selectedMeetup),
+                        _buildInfoRow('선호 지역', _selectedLocation),
+                      ]),
                 const SizedBox(height: 24),
 
                 // 관심사
@@ -149,15 +206,20 @@ class LocalProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildInfoCard([
-                  _buildInfoRow('관심 분야',
-                      interests.isNotEmpty ? interests.join(', ') : '-'),
-                  _buildInfoRow('취미', hobbies),
-                ]),
+                _editing
+                    ? _buildEditableInterests()
+                    : _buildInfoCard([
+                        _buildInfoRow(
+                            '관심 분야',
+                            _selectedInterests.isNotEmpty
+                                ? _selectedInterests.join(', ')
+                                : '-'),
+                        _buildInfoRow('취미', _hobbiesController.text),
+                      ]),
                 const SizedBox(height: 24),
 
                 // 자기소개
-                if (introduction.isNotEmpty) ...[
+                if (_introductionController.text.isNotEmpty) ...[
                   const Text(
                     '자기소개',
                     style: TextStyle(
@@ -166,28 +228,39 @@ class LocalProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '자기소개',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
+                  _editing
+                      ? TextFormField(
+                          controller: _introductionController,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            labelText: '자기소개',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person_pin),
+                            hintText: '여행자들에게 자신을 소개해주세요. (선택사항)',
+                          ),
+                        )
+                      : Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '자기소개',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _introductionController.text,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            introduction,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
                   const SizedBox(height: 24),
                 ],
 
@@ -206,7 +279,7 @@ class LocalProfileScreen extends StatelessWidget {
                 ]),
                 const SizedBox(height: 32),
 
-                // 수정 버튼
+                // 수정/저장 버튼
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -217,20 +290,47 @@ class LocalProfileScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      // TODO: 로컬인 정보 수정 화면으로 이동
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('수정 기능은 준비 중입니다.')),
-                      );
-                    },
-                    child: const Text(
-                      '로컬인 정보 수정',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _loading
+                        ? null
+                        : () async {
+                            if (!_editing) {
+                              setState(() => _editing = true);
+                              return;
+                            }
+                            setState(() => _loading = true);
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('locals')
+                                  .doc(user.uid)
+                                  .update({
+                                'nickname': _nicknameController.text.trim(),
+                                'age': int.tryParse(_ageController.text) ?? 0,
+                                'gender': _selectedGender,
+                                'preferred_meetup': _selectedMeetup,
+                                'preferred_location': _selectedLocation,
+                                'interests': _selectedInterests,
+                                'hobbies': _hobbiesController.text.trim(),
+                                'introduction':
+                                    _introductionController.text.trim(),
+                                'updated_at': DateTime.now().toIso8601String(),
+                              });
+                              setState(() => _editing = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('프로필이 수정되었습니다.')),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('수정 실패: $e')),
+                              );
+                            } finally {
+                              setState(() => _loading = false);
+                            }
+                          },
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(_editing ? '저장' : '프로필 수정',
+                            style: const TextStyle(
+                                fontSize: 18, color: Colors.white)),
                   ),
                 ),
               ],
@@ -280,6 +380,142 @@ class LocalProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildEditableInfo() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _nicknameController,
+              decoration: const InputDecoration(
+                labelText: '닉네임',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person_outline),
+                hintText: '예: 홍길동, SeoulGuy, 여행왕',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _ageController,
+              decoration: const InputDecoration(
+                labelText: '나이',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _selectedGender,
+              decoration: const InputDecoration(
+                labelText: '성별',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              items: _genderOptions.map((gender) {
+                return DropdownMenuItem(
+                  value: gender,
+                  child: Text(gender),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() => _selectedGender = value!);
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _selectedMeetup,
+              decoration: const InputDecoration(
+                labelText: '선호 만남 방식',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.meeting_room),
+              ),
+              items: _meetupOptions.map((meetup) {
+                return DropdownMenuItem(
+                  value: meetup,
+                  child: Text(meetup),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() => _selectedMeetup = value!);
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _selectedLocation,
+              decoration: const InputDecoration(
+                labelText: '선호 지역',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.location_on),
+              ),
+              items: _locationOptions.map((location) {
+                return DropdownMenuItem(
+                  value: location,
+                  child: Text(location),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() => _selectedLocation = value!);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditableInterests() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '관심 분야 (여러 개 선택 가능)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: _interestOptions.map((interest) {
+                final isSelected = _selectedInterests.contains(interest);
+                return FilterChip(
+                  label: Text(_getInterestText(interest)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedInterests.add(interest);
+                      } else {
+                        _selectedInterests.remove(interest);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _hobbiesController,
+              decoration: const InputDecoration(
+                labelText: '취미',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.sports_esports),
+                hintText: '예: 등산, 사진, 요리',
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _getVerificationStatusText(String status) {
     switch (status) {
       case 'pending':
@@ -288,6 +524,8 @@ class LocalProfileScreen extends StatelessWidget {
         return '승인됨';
       case 'rejected':
         return '거부됨';
+      case 'accepted':
+        return '인증됨';
       default:
         return '알 수 없음';
     }
@@ -306,5 +544,30 @@ class LocalProfileScreen extends StatelessWidget {
       return timestamp.toString();
     }
     return timestamp.toString();
+  }
+
+  String _getInterestText(String interest) {
+    switch (interest) {
+      case 'food':
+        return '음식';
+      case 'culture':
+        return '문화';
+      case 'shopping':
+        return '쇼핑';
+      case 'nature':
+        return '자연';
+      case 'history':
+        return '역사';
+      case 'art':
+        return '예술';
+      case 'music':
+        return '음악';
+      case 'sports':
+        return '스포츠';
+      case 'technology':
+        return '기술';
+      default:
+        return interest;
+    }
   }
 }
