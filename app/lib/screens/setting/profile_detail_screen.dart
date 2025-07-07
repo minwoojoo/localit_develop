@@ -75,15 +75,57 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         );
       }
 
-      final ref =
-          FirebaseStorage.instance.ref().child('profile_images/$uid.jpg');
+      // 파일 확장자에 따라 contentType 결정
+      String contentType;
+      String fileExtension;
+
+      if (kIsWeb) {
+        // 웹에서는 picked.name으로 파일명 확인
+        final fileName = picked.name.toLowerCase();
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        } else if (fileName.endsWith('.png')) {
+          contentType = 'image/png';
+          fileExtension = 'png';
+        } else if (fileName.endsWith('.gif')) {
+          contentType = 'image/gif';
+          fileExtension = 'gif';
+        } else {
+          // 기본값
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        }
+      } else {
+        // 모바일에서는 picked.path로 파일명 확인
+        final fileName = picked.path.toLowerCase();
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        } else if (fileName.endsWith('.png')) {
+          contentType = 'image/png';
+          fileExtension = 'png';
+        } else if (fileName.endsWith('.gif')) {
+          contentType = 'image/gif';
+          fileExtension = 'gif';
+        } else {
+          // 기본값
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        }
+      }
+
+      final storage = FirebaseStorage.instanceFor(
+        bucket: 'localit-ef984.firebasestorage.app',
+      );
+      final ref = storage.ref().child('profile_images/$uid.$fileExtension');
       String url;
 
       if (kIsWeb) {
         // 웹: putData(Uint8List)
         final bytes = await picked.readAsBytes();
         final metadata = SettableMetadata(
-          contentType: 'image/jpeg',
+          contentType: contentType,
           customMetadata: {'userId': uid},
         );
         await ref.putData(bytes, metadata);
@@ -92,7 +134,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         // 모바일: putFile(File)
         final file = io.File(picked.path);
         final metadata = SettableMetadata(
-          contentType: 'image/jpeg',
+          contentType: contentType,
           customMetadata: {'userId': uid},
         );
         await ref.putFile(file, metadata);
@@ -119,10 +161,31 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
+        // 에러 메시지를 화면에 표시
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('이미지 업로드 실패'),
+              content: Text('이미지 업로드 에러: ${e.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // 다이얼로그 닫기
+                  },
+                  child: const Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+
+        // 추가로 스낵바에도 에러 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('이미지 업로드 실패: ${e.toString()}'),
+            content: Text('이미지 업로드 에러: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
