@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ExploreDetailScreen extends StatelessWidget {
   final String localId;
@@ -23,6 +24,16 @@ class ExploreDetailScreen extends StatelessWidget {
       return list.join(', ');
     }
     return value.toString();
+  }
+
+  Future<String?> getProfileImageUrl(String? path) async {
+    if (path == null || path.isEmpty) return null;
+    try {
+      final ref = FirebaseStorage.instance.ref().child(path);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
@@ -50,18 +61,28 @@ class ExploreDetailScreen extends StatelessWidget {
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundImage: (data['profileImageUrl'] != null &&
-                              (data['profileImageUrl'] as String).isNotEmpty)
-                          ? NetworkImage(data['profileImageUrl'])
-                          : null,
-                      backgroundColor: Colors.grey[300],
-                      child: (data['profileImageUrl'] == null ||
-                              (data['profileImageUrl'] as String).isEmpty)
-                          ? const Icon(Icons.person, color: Colors.white)
-                          : null,
+                    FutureBuilder<String?>(
+                      future: getProfileImageUrl(data['profileImagePath']),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircleAvatar(
+                              radius: 24, backgroundColor: Colors.grey);
+                        }
+                        final url = snapshot.data;
+                        return CircleAvatar(
+                          radius: 24,
+                          backgroundImage: (url != null && url.isNotEmpty)
+                              ? NetworkImage(url)
+                              : null,
+                          backgroundColor: Colors.grey[300],
+                          child: (url == null || url.isEmpty)
+                              ? const Icon(Icons.person, color: Colors.white)
+                              : null,
+                        );
+                      },
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -70,10 +91,11 @@ class ExploreDetailScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(data['nickname'] ?? '',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18)),
+                              Text(
+                                data['nickname'] ?? '',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
                               const SizedBox(width: 6),
                               Icon(Icons.verified,
                                   color: Colors.green, size: 18),

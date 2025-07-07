@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:localit/screens/matching/explore_detail_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -106,6 +107,16 @@ class _ExploreScreenState extends State<ExploreScreen>
     );
   }
 
+  Future<String?> getProfileImageUrl(String? path) async {
+    if (path == null || path.isEmpty) return null;
+    try {
+      final ref = FirebaseStorage.instance.ref().child(path);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      return null;
+    }
+  }
+
   // 리스트형 로컬인 게시글
   Widget _buildLocalPostsList() {
     return StreamBuilder<QuerySnapshot>(
@@ -123,33 +134,56 @@ class _ExploreScreenState extends State<ExploreScreen>
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             return ListTile(
-              leading: CircleAvatar(
-                radius: 28,
-                backgroundImage: data['profileImageUrl'] != null
-                    ? NetworkImage(data['profileImageUrl'])
-                    : null,
-                backgroundColor: Colors.grey[300],
-                child: data['profileImageUrl'] == null
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : null,
+              leading: FutureBuilder<String?>(
+                future: getProfileImageUrl(data['profileImagePath']),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircleAvatar(
+                        radius: 24, backgroundColor: Colors.grey);
+                  }
+                  final url = snapshot.data;
+                  return CircleAvatar(
+                    radius: 24,
+                    backgroundImage: (url != null && url.isNotEmpty)
+                        ? NetworkImage(url)
+                        : null,
+                    backgroundColor: Colors.grey[300],
+                    child: (url == null || url.isEmpty)
+                        ? const Icon(Icons.person, color: Colors.white)
+                        : null,
+                  );
+                },
               ),
-              title: Text(
-                data['nickname'] ?? '닉네임 없음',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      data['nickname'] ?? '',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.verified, color: Colors.green, size: 18),
+                ],
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data['intro'] ?? '소개글 없음'),
-                  Row(
-                    children: [
-                      Icon(Icons.verified, color: Colors.green, size: 16),
-                      SizedBox(width: 4),
-                      Text(
-                        '신뢰도 ${data['trust_score'] ?? 0}점',
-                        style: TextStyle(color: Colors.green, fontSize: 12),
-                      ),
-                    ],
+                  Text(
+                    data['intro'] ?? '',
+                    style: const TextStyle(fontSize: 13),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data['tag'] ?? '',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
