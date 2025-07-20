@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'local_registration.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+// import 'dart:io' show Platform;
+// import 'package:flutter/foundation.dart' show kIsWeb;
+// import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LocalAuthScreen extends StatefulWidget {
   const LocalAuthScreen({super.key});
@@ -15,8 +16,9 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _smsCodeController = TextEditingController();
-  String? _verificationId;
+  // String? _verificationId;
   bool _isLoading = false;
+  bool _codeSent = false;
 
   @override
   void dispose() {
@@ -25,68 +27,42 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
     super.dispose();
   }
 
-  String formatToE164(String input) {
-    String digits = input.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.startsWith('010')) {
-      return '+82' + digits.substring(1);
-    }
-    if (digits.startsWith('82')) {
-      return '+$digits';
-    }
-    return input;
-  }
+  // String formatToE164(String input) {
+  //   String digits = input.replaceAll(RegExp(r'[^0-9]'), '');
+  //   if (digits.startsWith('010')) {
+  //     return '+82' + digits.substring(1);
+  //   }
+  //   if (digits.startsWith('82')) {
+  //     return '+$digits';
+  //   }
+  //   return input;
+  // }
 
   Future<void> _sendVerificationCode() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final auth = FirebaseAuth.instance;
-      final phone = formatToE164(_phoneController.text);
-      await auth.verifyPhoneNumber(
-        phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await auth.signInWithCredential(credential);
-          setState(() => _isLoading = false);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const LocalRegistrationScreen()),
-          );
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          setState(() => _isLoading = false);
-          String msg;
-          switch (e.code) {
-            case 'invalid-phone-number':
-              msg = '유효하지 않은 전화번호입니다.';
-              break;
-            case 'too-many-requests':
-              msg = '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.';
-              break;
-            case 'quota-exceeded':
-              msg = '일일 인증 한도를 초과했습니다.';
-              break;
-            default:
-              msg = '인증 실패: ${e.message}';
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.red),
-          );
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('인증코드가 전송되었습니다.'), backgroundColor: Colors.green),
-          );
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
+      final phone = _phoneController.text.trim();
+
+      // 모의 전화번호 인증: "01012345678"만 허용
+      if (phone == "01012345678") {
+        setState(() {
+          _codeSent = true;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('인증코드가 전송되었습니다. (654321)'),
+              backgroundColor: Colors.green),
+        );
+      } else {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('올바른 전화번호를 입력해주세요. (01012345678)'),
+              backgroundColor: Colors.red),
+        );
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,6 +73,46 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
       );
     }
   }
+
+  // // 사용자의 전화번호 인증 상태를 업데이트하는 함수
+  // Future<void> _updateUserPhoneVerification(
+  //     String userId, String phoneNumber) async {
+  //   try {
+  //     // 사용자 문서가 존재하는지 확인
+  //     final userDoc = await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(userId)
+  //         .get();
+
+  //     if (userDoc.exists) {
+  //       // 기존 사용자 문서 업데이트
+  //       await FirebaseFirestore.instance.collection('users').doc(userId).update({
+  //         'phone_number': phoneNumber,
+  //         'phone_verified': true,
+  //         'phone_verification_date': FieldValue.serverTimestamp(),
+  //         'updated_at': FieldValue.serverTimestamp(),
+  //       });
+  //     } else {
+  //       // 사용자 문서가 없는 경우 새로 생성 (전화번호 인증 사용자용)
+  //       final currentUser = FirebaseAuth.instance.currentUser;
+  //       if (currentUser != null) {
+  //         await FirebaseFirestore.instance.collection('users').doc(userId).set({
+  //           'user_id': userId,
+  //           'email': currentUser.email,
+  //           'phone_number': phoneNumber,
+  //           'phone_verified': true,
+  //           'phone_verification_date': FieldValue.serverTimestamp(),
+  //           'created_at': FieldValue.serverTimestamp(),
+  //           'updated_at': FieldValue.serverTimestamp(),
+  //           'nickname': currentUser.displayName ?? '사용자',
+  //           'trust_score': 50.0,
+  //         });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('Error updating phone verification: $e');
+  //   }
+  // }
 
   Widget submitButton() {
     return ElevatedButton(
@@ -123,22 +139,29 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
 
   Widget verifyButton() {
     return ElevatedButton(
-      onPressed: (_isLoading || _verificationId == null)
+      onPressed: (_isLoading || !_codeSent)
           ? null
           : () async {
               setState(() => _isLoading = true);
               try {
-                final credential = PhoneAuthProvider.credential(
-                  verificationId: _verificationId!,
-                  smsCode: _smsCodeController.text,
-                );
-                await FirebaseAuth.instance.signInWithCredential(credential);
-                setState(() => _isLoading = false);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const LocalRegistrationScreen()),
-                );
+                final smsCode = _smsCodeController.text.trim();
+
+                // 모의 인증코드 확인: "654321"만 허용
+                if (smsCode == "654321") {
+                  setState(() => _isLoading = false);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LocalRegistrationScreen()),
+                  );
+                } else {
+                  setState(() => _isLoading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('올바른 인증코드를 입력해주세요. (654321)'),
+                        backgroundColor: Colors.red),
+                  );
+                }
               } catch (e) {
                 setState(() => _isLoading = false);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -200,7 +223,7 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
               ),
               const SizedBox(height: 8),
               submitButton(),
-              if (_verificationId != null) ...[
+              if (_codeSent) ...[
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _smsCodeController,
@@ -208,6 +231,7 @@ class _LocalAuthScreenState extends State<LocalAuthScreen> {
                   decoration: const InputDecoration(
                     labelText: '인증코드',
                     border: OutlineInputBorder(),
+                    hintText: '654321',
                   ),
                   keyboardType: TextInputType.number,
                 ),

@@ -1,69 +1,113 @@
 import 'package:flutter/material.dart';
+import '../auth/login_screen.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Spacer(flex: 2),
-            // 로고 및 텍스트
-            Column(
-              children: [
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
-                    children: [
-                      TextSpan(text: 'L'),
-                      WidgetSpan(
-                        child: Icon(Icons.place, color: Colors.blue, size: 32),
-                      ),
-                      TextSpan(text: 'cal '),
-                      TextSpan(
-                          text: 'Mate', style: TextStyle(color: Colors.blue)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '신뢰할 수 있는 현지인들의 실제 여행 정보',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            // 상단 여백
+            const Expanded(
+              flex: 2,
+              child: SizedBox(),
             ),
-            const Spacer(flex: 3),
+            // 메인 콘텐츠 (로고 + 태그라인)
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // LocalIt 로고
+                    Image.asset(
+                      'assets/logo.png',
+                      height: 80,
+                    ),
+                    const SizedBox(height: 16),
+                    // 태그라인
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '신뢰',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.pink[400],
+                              height: 1.4,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '할 수 있는 ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                              height: 1.4,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '현지인',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.pink[400],
+                              height: 1.4,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '들의 실제 여행 정보',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // 하단 여백
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
             // 시작하기 버튼
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              padding: const EdgeInsets.only(bottom: 40, left: 24, right: 24),
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 56,
                 child: ElevatedButton(
+                  onPressed: () {
+                    // 시작하기 버튼 클릭 시 처리
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.blue[600],
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    elevation: 0,
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
                   child: const Text(
                     '시작하기',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

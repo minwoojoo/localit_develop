@@ -10,14 +10,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _idController = TextEditingController();
-  final TextEditingController _pwController = TextEditingController();
-  bool _saveLogin = false;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _autoLogin = false;
   bool _isLoading = false;
 
   Future<void> _signIn() async {
-    final email = _idController.text.trim();
-    final password = _pwController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       showDialog(
@@ -95,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -102,82 +103,157 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
-                // 로고
+                const SizedBox(height: 60),
+                // LocalIt 로고 (파란색 테두리 박스 안에)
                 Center(
-                  child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextSpan(text: 'Lo'),
-                        WidgetSpan(
-                          child:
-                              Icon(Icons.place, color: Colors.blue, size: 32),
+                        // LocalIt 로고
+                        Image.asset(
+                          'assets/logo.png',
+                          height: 60,
                         ),
-                        TextSpan(text: 'cal '),
-                        TextSpan(
-                            text: 'Mate', style: TextStyle(color: Colors.blue)),
+                        const SizedBox(height: 8),
+                        // 태그라인
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '신뢰',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.pink[400],
+                                  height: 1.4,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '할 수 있는 ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                  height: 1.4,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '현지인',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.pink[400],
+                                  height: 1.4,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '들의 실제 여행정보',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 40),
-                // 계정 입력
-                const Text('계정', style: TextStyle(fontSize: 14)),
-                const SizedBox(height: 6),
+                // 이메일 입력
+                const Text('이메일',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
                 TextField(
-                  controller: _idController,
+                  controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
+                    hintText: 'Enter your email',
+                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 // 비밀번호 입력
-                const Text('비밀번호', style: TextStyle(fontSize: 14)),
-                const SizedBox(height: 6),
+                const Text('비밀번호',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
                 TextField(
-                  controller: _pwController,
+                  controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
+                    hintText: '••••••••••',
+                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // 로그인 정보 저장
+                const SizedBox(height: 16),
+                // 자동 로그인과 비밀번호 재설정
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Checkbox(
-                      value: _saveLogin,
-                      onChanged: (val) {
-                        setState(() {
-                          _saveLogin = val ?? false;
-                        });
-                      },
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _autoLogin,
+                          onChanged: (val) {
+                            setState(() {
+                              _autoLogin = val ?? false;
+                            });
+                          },
+                        ),
+                        const Text('자동 로그인', style: TextStyle(fontSize: 14)),
+                      ],
                     ),
-                    const Text('로그인 정보 저장'),
+                    TextButton(
+                      onPressed: () {},
+                      child: const Text('비밀번호 재설정',
+                          style: TextStyle(color: Colors.blue, fontSize: 14)),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
                 // 로그인 버튼
                 SizedBox(
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.blue[600],
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -186,53 +262,58 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text('로그인',
-                            style:
-                                TextStyle(fontSize: 18, color: Colors.white)),
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // 회원가입/비밀번호 찾기
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignupScreen()),
-                        );
-                      },
-                      child: const Text('회원가입',
-                          style: TextStyle(color: Colors.blue)),
+                const SizedBox(height: 16),
+                // Google 로그인 버튼
+                Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('비밀번호 찾기',
-                          style: TextStyle(color: Colors.black)),
+                    onPressed: () {},
+                    child: Image.asset(
+                      'assets/google.png',
+                      height: 30,
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                // 소셜 로그인
+                const SizedBox(height: 32),
+                // 회원가입 링크
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.g_mobiledata, size: 32),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chat_bubble, size: 28), // 카카오톡 대체
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.nat, size: 28), // 네이버 대체
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.apple, size: 28),
-                      onPressed: () {},
+                    const Text('아직 계정이 없으신가요? ',
+                        style: TextStyle(fontSize: 14, color: Colors.black)),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignupScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('무료 회원 가입!',
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),

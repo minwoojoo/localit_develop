@@ -57,9 +57,12 @@ class _SignupScreenState extends State<SignupScreen> {
       if (user != null) {
         // Firestore에 추가 정보 저장
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'user_id': user.uid, // user_id 필드 추가
           'email': email,
           'nickname': nickname,
           'phone_number': "",
+          'phone_verified': false, // 전화번호 인증 상태 추가
+          'phone_verification_date': null, // 전화번호 인증 날짜 추가
           'type': "traveler",
           'profileImageUrl': "",
           'languages': [language],

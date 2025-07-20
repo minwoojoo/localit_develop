@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' as io;
+import '../auth/local_auth.dart';
 
 class LocalProfileScreen extends StatefulWidget {
   const LocalProfileScreen({super.key});
@@ -12,6 +17,7 @@ class LocalProfileScreen extends StatefulWidget {
 class _LocalProfileScreenState extends State<LocalProfileScreen> {
   bool _editing = false;
   bool _loading = false;
+  bool _uploadingImage = false;
   final _nicknameController = TextEditingController();
   final _ageController = TextEditingController();
   String _selectedGender = '남';
@@ -20,6 +26,14 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
   List<String> _selectedInterests = [];
   final _hobbiesController = TextEditingController();
   final _introductionController = TextEditingController();
+  final _schoolOrCompanyController = TextEditingController();
+  final _languagesController = TextEditingController();
+  final _tagsController = TextEditingController();
+  final _personalInfoController = TextEditingController();
+  bool _isGraduated = false;
+
+  // 이미지 관련 변수
+  String _currentProfileImageUrl = '';
 
   final List<String> _genderOptions = ['남', '여', '기타'];
   final List<String> _meetupOptions = ['온', '오프', '둘 다'];
@@ -51,7 +65,148 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
     _ageController.dispose();
     _hobbiesController.dispose();
     _introductionController.dispose();
+    _schoolOrCompanyController.dispose();
+    _languagesController.dispose();
+    _tagsController.dispose();
+    _personalInfoController.dispose();
     super.dispose();
+  }
+
+  // 이미지 선택 및 업로드 함수
+  Future<void> _pickAndUploadImage(String uid) async {
+    try {
+      setState(() => _uploadingImage = true);
+
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (picked == null) {
+        setState(() => _uploadingImage = false);
+        return;
+      }
+
+      // 로딩 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미지를 업로드 중입니다...')),
+        );
+      }
+
+      // 파일 확장자에 따라 contentType 결정
+      String contentType;
+      String fileExtension;
+
+      if (kIsWeb) {
+        // 웹에서는 picked.name으로 파일명 확인
+        final fileName = picked.name.toLowerCase();
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        } else if (fileName.endsWith('.png')) {
+          contentType = 'image/png';
+          fileExtension = 'png';
+        } else if (fileName.endsWith('.gif')) {
+          contentType = 'image/gif';
+          fileExtension = 'gif';
+        } else {
+          // 기본값
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        }
+      } else {
+        // 모바일에서는 picked.path로 파일명 확인
+        final fileName = picked.path.toLowerCase();
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        } else if (fileName.endsWith('.png')) {
+          contentType = 'image/png';
+          fileExtension = 'png';
+        } else if (fileName.endsWith('.gif')) {
+          contentType = 'image/gif';
+          fileExtension = 'gif';
+        } else {
+          // 기본값
+          contentType = 'image/jpeg';
+          fileExtension = 'jpg';
+        }
+      }
+
+      final storage = FirebaseStorage.instanceFor(
+        bucket: 'localit-ef984.firebasestorage.app',
+      );
+      final ref = storage.ref().child('profile_images/$uid.$fileExtension');
+      String url;
+
+      if (kIsWeb) {
+        // 웹: putData(Uint8List)
+        final bytes = await picked.readAsBytes();
+        final metadata = SettableMetadata(
+          contentType: contentType,
+          customMetadata: {'userId': uid},
+        );
+        await ref.putData(bytes, metadata);
+        url = await ref.getDownloadURL();
+      } else {
+        // 모바일: putFile(File)
+        final file = io.File(picked.path);
+        final metadata = SettableMetadata(
+          contentType: contentType,
+          customMetadata: {'userId': uid},
+        );
+        await ref.putFile(file, metadata);
+        url = await ref.getDownloadURL();
+      }
+
+      // 상태 업데이트
+      if (mounted) {
+        setState(() {
+          _currentProfileImageUrl = url;
+          _uploadingImage = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('프로필 이미지가 업데이트되었습니다.')),
+        );
+      }
+    } catch (e) {
+      setState(() => _uploadingImage = false);
+      if (mounted) {
+        // 에러 메시지를 화면에 표시
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('이미지 업로드 실패'),
+              content: Text('이미지 업로드 에러: ${e.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // 다이얼로그 닫기
+                  },
+                  child: const Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+
+        // 추가로 스낵바에도 에러 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('이미지 업로드 에러: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      print('이미지 업로드 에러: $e');
+    }
   }
 
   @override
@@ -69,32 +224,100 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body: StreamBuilder<DocumentSnapshot>(
+      body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('locals')
-            .doc(user.uid)
+            .where('user_id', isEqualTo: user.uid)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
-          if (data == null) {
-            return const Center(
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.person_off, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    '로컬인 정보가 없습니다.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  const Icon(Icons.person_add, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '로컬인 등록이 필요합니다',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    '로컬인 등록을 먼저 해주세요.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '로컬인으로 활동하려면\n등록을 먼저 해주세요',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 로컬인 인증 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LocalAuthScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
+                    ),
+                    child: const Text(
+                      '로컬인 등록하기',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final data =
+              snapshot.data!.docs.first.data() as Map<String, dynamic>?;
+          if (data == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.person_add, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '로컬인 등록이 필요합니다',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '로컬인으로 활동하려면\n등록을 먼저 해주세요',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 로컬인 인증 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LocalAuthScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
+                    ),
+                    child: const Text(
+                      '로컬인 등록하기',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ],
               ),
@@ -112,6 +335,14 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
                 (data['interests'] as List<dynamic>?)?.cast<String>() ?? [];
             _hobbiesController.text = data['hobbies'] ?? '';
             _introductionController.text = data['introduction'] ?? '';
+            _schoolOrCompanyController.text = data['school_or_company'] ?? '';
+            _languagesController.text =
+                (data['languages'] as List<dynamic>?)?.join(', ') ?? '';
+            _tagsController.text =
+                (data['tags'] as List<dynamic>?)?.join(', ') ?? '';
+            _personalInfoController.text = data['personal_info'] ?? '';
+            _isGraduated = data['is_graduated'] ?? false;
+            _currentProfileImageUrl = data['profile_image_url'] ?? '';
           }
 
           final verificationStatus = data['verification_status'] ?? 'pending';
@@ -119,6 +350,14 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
           final profileImageUrl = data['profile_image_url'] ?? '';
           final createdAt = data['created_at'] ?? '-';
           final updatedAt = data['updated_at'] ?? '-';
+          final schoolOrCompany = data['school_or_company'] ?? '';
+          final tags = (data['tags'] as List<dynamic>?)?.cast<String>() ?? [];
+          final personalInfo = data['personal_info'] ?? '';
+          final languages =
+              (data['languages'] as List<dynamic>?)?.cast<String>() ?? [];
+          final isGraduated = data['is_graduated'] ?? false;
+          final matchCount = data['match_count']?.toString() ?? '0';
+          final mannerScore = data['manner_score']?.toString() ?? '60.0';
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -126,16 +365,39 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 프로필 이미지
-                if (profileImageUrl.isNotEmpty) ...[
-                  Center(
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundImage: NetworkImage(profileImageUrl),
-                      backgroundColor: const Color(0xFFEAE2F8),
-                    ),
+                Center(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      _currentProfileImageUrl.isNotEmpty
+                          ? CircleAvatar(
+                              radius: 56,
+                              backgroundImage:
+                                  NetworkImage(_currentProfileImageUrl),
+                              backgroundColor: const Color(0xFFEAE2F8),
+                            )
+                          : const CircleAvatar(
+                              radius: 56,
+                              backgroundColor: Color(0xFFEAE2F8),
+                              child: Icon(
+                                Icons.person,
+                                size: 64,
+                                color: Color(0xFF5F4B8B),
+                              ),
+                            ),
+                      const SizedBox(height: 12),
+                      if (_editing)
+                        ElevatedButton(
+                          onPressed: _uploadingImage
+                              ? null
+                              : () => _pickAndUploadImage(user.uid),
+                          child: const Text('프로필 이미지 변경'),
+                        ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                ],
+                ),
+                const SizedBox(height: 24),
 
                 // 인증 상태 카드
                 Card(
@@ -194,6 +456,16 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
                         _buildInfoRow('성별', _selectedGender),
                         _buildInfoRow('선호 만남 방식', _selectedMeetup),
                         _buildInfoRow('선호 지역', _selectedLocation),
+                        _buildInfoRow('학교/직장', schoolOrCompany),
+                        _buildInfoRow('대학교 졸업', isGraduated ? '예' : '아니오'),
+                        _buildInfoRow('가능언어',
+                            languages.isNotEmpty ? languages.join(', ') : '-'),
+                        _buildInfoRow(
+                            '태그', tags.isNotEmpty ? tags.join(', ') : '-'),
+                        _buildInfoRow('인적사항',
+                            personalInfo.isNotEmpty ? personalInfo : '-'),
+                        _buildInfoRow('매칭 횟수', matchCount),
+                        _buildInfoRow('매너 온도', mannerScore),
                       ]),
                 const SizedBox(height: 24),
 
@@ -290,7 +562,7 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: _loading
+                    onPressed: _loading || _uploadingImage
                         ? null
                         : () async {
                             if (!_editing) {
@@ -299,25 +571,40 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
                             }
                             setState(() => _loading = true);
                             try {
-                              await FirebaseFirestore.instance
-                                  .collection('locals')
-                                  .doc(user.uid)
-                                  .update({
-                                'nickname': _nicknameController.text.trim(),
-                                'age': int.tryParse(_ageController.text) ?? 0,
-                                'gender': _selectedGender,
-                                'preferred_meetup': _selectedMeetup,
-                                'preferred_location': _selectedLocation,
-                                'interests': _selectedInterests,
-                                'hobbies': _hobbiesController.text.trim(),
-                                'introduction':
-                                    _introductionController.text.trim(),
-                                'updated_at': DateTime.now().toIso8601String(),
-                              });
-                              setState(() => _editing = false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('프로필이 수정되었습니다.')),
-                              );
+                              if (snapshot.hasData &&
+                                  snapshot.data!.docs.isNotEmpty) {
+                                // Firestore 업데이트
+                                final updateData = {
+                                  'nickname': _nicknameController.text.trim(),
+                                  'age': int.tryParse(_ageController.text) ?? 0,
+                                  'gender': _selectedGender,
+                                  'preferred_meetup': _selectedMeetup,
+                                  'preferred_location': _selectedLocation,
+                                  'interests': _selectedInterests,
+                                  'hobbies': _hobbiesController.text.trim(),
+                                  'introduction':
+                                      _introductionController.text.trim(),
+                                  'updated_at':
+                                      DateTime.now().toIso8601String(),
+                                };
+
+                                // 새 이미지가 있으면 추가
+                                if (_currentProfileImageUrl.isNotEmpty) {
+                                  updateData['profile_image_url'] =
+                                      _currentProfileImageUrl;
+                                }
+
+                                await FirebaseFirestore.instance
+                                    .collection('locals')
+                                    .doc(snapshot.data!.docs.first.id)
+                                    .update(updateData);
+
+                                setState(() => _editing = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('프로필이 수정되었습니다.')),
+                                );
+                              }
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('수정 실패: $e')),
@@ -326,7 +613,7 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
                               setState(() => _loading = false);
                             }
                           },
-                    child: _loading
+                    child: _loading || _uploadingImage
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(_editing ? '저장' : '프로필 수정',
                             style: const TextStyle(
@@ -458,6 +745,61 @@ class _LocalProfileScreenState extends State<LocalProfileScreen> {
               onChanged: (value) {
                 setState(() => _selectedLocation = value!);
               },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _schoolOrCompanyController,
+              decoration: const InputDecoration(
+                labelText: '학교/직장',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.school),
+                hintText: '예: 연세대학교, 삼성전자 (선택사항)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
+                  value: _isGraduated,
+                  onChanged: (value) {
+                    setState(() {
+                      _isGraduated = value ?? false;
+                    });
+                  },
+                ),
+                const Text('대학교 졸업', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _languagesController,
+              decoration: const InputDecoration(
+                labelText: '가능언어',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.language),
+                hintText: '예: 비즈니스 영어, 아랍어, 스페인어 (쉼표로 구분)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _tagsController,
+              decoration: const InputDecoration(
+                labelText: '태그',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.tag),
+                hintText: '예: #친절한, #사진잘찍는, #맛집고수 (쉼표로 구분)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _personalInfoController,
+              decoration: const InputDecoration(
+                labelText: '인적사항',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.info),
+                hintText: '추가적인 개인 정보를 입력해주세요. (선택사항)',
+              ),
+              maxLines: 3,
             ),
           ],
         ),
