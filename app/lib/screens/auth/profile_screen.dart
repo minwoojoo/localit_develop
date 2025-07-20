@@ -5,6 +5,8 @@ import 'login_screen.dart';
 import 'package:localit/screens/setting/profile_detail_screen.dart';
 import 'package:localit/screens/setting/local_profile.dart';
 import 'package:localit/screens/auth/local_auth.dart';
+import 'package:localit/screens/matching/match_requests_screen.dart';
+import 'package:localit/screens/auth/local_registration.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -56,14 +58,14 @@ class ProfileScreen extends StatelessWidget {
           final profileImageUrl = data['profileImageUrl'] ?? '';
           final trustScore = data['trust_score']?.toString() ?? '-';
 
-          return StreamBuilder<DocumentSnapshot>(
+          return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('locals')
-                .doc(user.uid)
+                .where('user_id', isEqualTo: user.uid)
                 .snapshots(),
             builder: (context, localSnapshot) {
               final isLocalRegistered =
-                  localSnapshot.hasData && localSnapshot.data?.exists == true;
+                  localSnapshot.hasData && localSnapshot.data!.docs.isNotEmpty;
               return SingleChildScrollView(
                 child: Column(
                   children: [
@@ -159,11 +161,15 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () async {
-                                      // 로컬인 등록 해제: locals 컬렉션에서 문서 삭제
-                                      await FirebaseFirestore.instance
-                                          .collection('locals')
-                                          .doc(user.uid)
-                                          .delete();
+                                      // 로컬인 등록 해제: locals 컬렉션에서 해당 사용자의 문서 삭제
+                                      if (localSnapshot.hasData &&
+                                          localSnapshot.data!.docs.isNotEmpty) {
+                                        await FirebaseFirestore.instance
+                                            .collection('locals')
+                                            .doc(localSnapshot
+                                                .data!.docs.first.id)
+                                            .delete();
+                                      }
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         const SnackBar(
@@ -187,6 +193,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () {
+                                      // 간단한 전화번호 인증 화면으로 이동
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -215,23 +222,21 @@ class ProfileScreen extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
                         _buildMenuItem(
-                          icon: Icons.article,
-                          title: '내가 작성한 게시글',
-                          onTap: () {},
-                        ),
-                        _buildMenuItem(
                           icon: Icons.request_page,
                           title: '받은 요청',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const MatchRequestsScreen(),
+                              ),
+                            );
+                          },
                         ),
                         _buildMenuItem(
                           icon: Icons.rate_review,
                           title: '후기 관리',
-                          onTap: () {},
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.workspace_premium,
-                          title: '뱃지 / 신뢰도',
                           onTap: () {},
                         ),
                         _buildMenuItem(

@@ -41,6 +41,7 @@ dependencies:
   http: ^0.13.0
   firebase_storage: ^12.4.8
   image_picker: ^1.1.2
+  
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,10 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logo.png
+    - assets/google.png
+    - assets/home_image.png
+    - assets/purchase_agency.png
+    - assets/reservation_agency.png
     - .env
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

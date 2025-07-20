@@ -20,9 +20,14 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
   final _hobbiesController = TextEditingController();
   final _introductionController = TextEditingController();
   final _nicknameController = TextEditingController();
+  final _schoolOrCompanyController = TextEditingController();
+  final _personalInfoController = TextEditingController();
+  final _tagsController = TextEditingController();
+  final _languagesController = TextEditingController();
   String _selectedGender = '남';
   String _selectedMeetup = '오프';
   String _selectedLocation = 'Hongdae';
+  bool _isGraduated = false;
   List<String> _selectedInterests = [];
   bool _isLoading = false;
   String? _profileImageUrl;
@@ -57,6 +62,10 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
     _hobbiesController.dispose();
     _introductionController.dispose();
     _nicknameController.dispose();
+    _schoolOrCompanyController.dispose();
+    _personalInfoController.dispose();
+    _tagsController.dispose();
+    _languagesController.dispose();
     super.dispose();
   }
 
@@ -121,10 +130,55 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
     setState(() => _isLoading = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null || user.phoneNumber == null) {
-        throw Exception('전화번호 인증이 필요합니다.');
+      if (user == null) {
+        throw Exception('로그인이 필요합니다.');
       }
+
+      print('DEBUG: Current user.uid = ${user.uid}');
+      print('DEBUG: Current user.email = ${user.email}');
+      print('DEBUG: Current user.phoneNumber = ${user.phoneNumber}');
+
+      // users 컬렉션에서 사용자 정보 확인
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      print('DEBUG: User document exists = ${userDoc.exists}');
+      print('DEBUG: User document ID = ${userDoc.id}');
+
+      if (!userDoc.exists) {
+        throw Exception('사용자 정보를 찾을 수 없습니다. 먼저 회원가입을 완료해주세요.');
+      }
+
+      final userData = userDoc.data();
+      print('DEBUG: User data = $userData');
+
+      if (userData == null) {
+        throw Exception('사용자 데이터를 불러올 수 없습니다.');
+      }
+
+      // users 컬렉션의 phone_verified 필드 확인 (모의 인증이므로 항상 true로 간주)
+      final phoneVerified = true; // 모의 인증이므로 항상 true
+      print('DEBUG: phone_verified = $phoneVerified');
+
+      // 기존 사용자의 user_id 사용 (없으면 현재 uid 사용)
+      final actualUserId = userData['user_id'] ?? user.uid;
+      print('DEBUG: actualUserId = $actualUserId');
+
+      // 기존 로컬인 등록 확인
+      final existingLocal = await FirebaseFirestore.instance
+          .collection('locals')
+          .where('user_id', isEqualTo: actualUserId)
+          .get();
+
+      if (existingLocal.docs.isNotEmpty) {
+        throw Exception('이미 로컬인으로 등록되어 있습니다.');
+      }
+
       final localData = {
+        'user_id': actualUserId, // 실제 사용자의 user_id 사용
+        'nickname': _nicknameController.text.trim(),
         'certified': true,
         'age': int.parse(_ageController.text),
         'gender': _selectedGender,
@@ -133,17 +187,36 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
         'preferred_location': _selectedLocation,
         'interests': _selectedInterests,
         'hobbies': _hobbiesController.text.trim(),
-        'nickname': _nicknameController.text.trim(),
         'introduction': _introductionController.text.trim(),
-        'verification_status': 'accepted',
+        'verification_status': 'approved',
         'created_at': FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
-        'phone_number': user.phoneNumber,
+        'phone_number':
+            userData['phone_number'] ?? '01012345678', // 사용자 데이터에서 가져오거나 모의 번호
+        'manner_score': 60.0, // 매너 온도 기본값 60
+        'school_or_company': _schoolOrCompanyController.text.trim(),
+        'match_count': 0, // 매칭 횟수 기본값 0
+        'tags': _tagsController.text.trim().isNotEmpty
+            ? _tagsController.text
+                .trim()
+                .split(',')
+                .map((tag) => tag.trim())
+                .toList()
+            : [],
+        'personal_info': _personalInfoController.text.trim(),
+        'languages': _languagesController.text.trim().isNotEmpty
+            ? _languagesController.text
+                .trim()
+                .split(',')
+                .map((lang) => lang.trim())
+                .toList()
+            : [],
+        'is_graduated': _isGraduated,
       };
-      await FirebaseFirestore.instance
-          .collection('locals')
-          .doc(user.uid)
-          .set(localData);
+
+      // locals 컬렉션에 새 문서 생성
+      await FirebaseFirestore.instance.collection('locals').add(localData);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -172,9 +245,9 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || user.phoneNumber == null) {
+    if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('전화번호 인증이 필요합니다.')),
+        body: Center(child: Text('로그인이 필요합니다.')),
       );
     }
     return Scaffold(
@@ -442,6 +515,138 @@ class _LocalRegistrationScreenState extends State<LocalRegistrationScreen> {
                   // 자기소개는 선택사항이므로 검증하지 않음
                   return null;
                 },
+              ),
+              const SizedBox(height: 24),
+
+              // 학교/직장 정보
+              const Text(
+                '학교/직장 정보',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _schoolOrCompanyController,
+                decoration: const InputDecoration(
+                  labelText: '학교 또는 직장',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.school),
+                  hintText: '예: 연세대학교, 삼성전자 (선택사항)',
+                ),
+                validator: (value) {
+                  // 선택사항이므로 검증하지 않음
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // 태그
+              const Text(
+                '태그',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _tagsController,
+                decoration: const InputDecoration(
+                  labelText: '태그',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.tag),
+                  hintText: '예: 친절한, 사진잘찍는, 맛집고수 (쉼표로 구분)',
+                ),
+                validator: (value) {
+                  // 선택사항이므로 검증하지 않음
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // 인적사항
+              const Text(
+                '인적사항',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _personalInfoController,
+                decoration: const InputDecoration(
+                  labelText: '인적사항',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.info),
+                  hintText: '추가적인 개인 정보를 입력해주세요. (선택사항)',
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  // 선택사항이므로 검증하지 않음
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // 가능언어
+              const Text(
+                '가능언어',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _languagesController,
+                decoration: const InputDecoration(
+                  labelText: '구사 가능한 언어',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.language),
+                  hintText: '예: 비즈니스 영어, 아랍어, 스페인어 (쉼표로 구분)',
+                ),
+                validator: (value) {
+                  // 선택사항이므로 검증하지 않음
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // 대학교 졸업 여부
+              const Text(
+                '학력 정보',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: _isGraduated,
+                      onChanged: (value) {
+                        setState(() {
+                          _isGraduated = value ?? false;
+                        });
+                      },
+                    ),
+                    const Text(
+                      '대학교 졸업',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 

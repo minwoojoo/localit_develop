@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:localit/screens/auth/profile_screen.dart';
+import 'package:localit/screens/matching/explore_screen.dart';
+import 'package:localit/screens/commerce/purchase_agency_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -36,13 +39,25 @@ class MenuScreen extends StatelessWidget {
                 icon: Icons.people,
                 title: '로컬 매칭',
                 subtitle: '현지인과 함께하는 여행',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ExploreScreen()),
+                  );
+                },
               ),
               _buildMenuItem(
                 icon: Icons.shopping_cart,
                 title: '구매대행',
                 subtitle: '현지 상품 구매 대행',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PurchaseAgencyScreen()),
+                  );
+                },
               ),
             ],
           ),
@@ -53,13 +68,13 @@ class MenuScreen extends StatelessWidget {
                 icon: Icons.forum,
                 title: '여행 후기',
                 subtitle: '여행 경험 공유',
-                onTap: () {},
-              ),
-              _buildMenuItem(
-                icon: Icons.event,
-                title: '소모임',
-                subtitle: '함께하는 여행 모임',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CommunityHomeScreen()),
+                  );
+                },
               ),
             ],
           ),
