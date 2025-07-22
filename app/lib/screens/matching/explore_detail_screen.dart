@@ -2,10 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/commerce/purchase_agency_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
+import 'package:localit/screens/common/menu_screen.dart';
 
-class ExploreDetailScreen extends StatelessWidget {
+class ExploreDetailScreen extends StatefulWidget {
   final String localId;
   const ExploreDetailScreen({super.key, required this.localId});
+
+  @override
+  State<ExploreDetailScreen> createState() => _ExploreDetailScreenState();
+}
+
+class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
+  int _selectedIndex = 0;
 
   String meetupTypeText(dynamic value) {
     if (value == null) return '';
@@ -240,8 +252,10 @@ class ExploreDetailScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future:
-            FirebaseFirestore.instance.collection('locals').doc(localId).get(),
+        future: FirebaseFirestore.instance
+            .collection('locals')
+            .doc(widget.localId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -505,7 +519,7 @@ class ExploreDetailScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () async {
-                          await _showRequestDialog(context, localId);
+                          await _showRequestDialog(context, widget.localId);
                         },
                         child: const Text(
                           '요청하기',
@@ -519,6 +533,72 @@ class ExploreDetailScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          // 네비게이션 처리
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PurchaseAgencyScreen()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const CommunityHomeScreen()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MenuScreen()),
+              );
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            label: '구매대행',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.send_outlined),
+            label: '메시지',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.all_inclusive),
+            label: '커뮤니티',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: '메뉴',
+          ),
+        ],
       ),
     );
   }

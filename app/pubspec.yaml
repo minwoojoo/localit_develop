@@ -70,6 +70,7 @@ flutter:
     - assets/logo.png
     - assets/google.png
     - assets/home_image.png
+    - assets/home_image2.jpg
     - assets/purchase_agency.png
     - assets/reservation_agency.png
     - .env

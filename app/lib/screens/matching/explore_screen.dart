@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:localit/screens/matching/explore_detail_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/commerce/purchase_agency_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
+import 'package:localit/screens/common/menu_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -17,6 +22,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   String sort = '추천순';
   String region = '지역별';
   String keyword = '키워드';
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -36,10 +42,14 @@ class _ExploreScreenState extends State<ExploreScreen>
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('로컬 매칭 찾기', style: TextStyle(color: Colors.black)),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(80),
+          preferredSize: const Size.fromHeight(120),
           child: Column(
             children: [
               TabBar(
@@ -54,26 +64,52 @@ class _ExploreScreenState extends State<ExploreScreen>
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  children: [
-                    _buildDropdown(sort, (val) => setState(() => sort = val)),
-                    const SizedBox(width: 4),
-                    _buildDropdown(
-                        region, (val) => setState(() => region = val)),
-                    const SizedBox(width: 4),
-                    _buildDropdown(
-                        keyword, (val) => setState(() => keyword = val)),
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(isCardView ? Icons.view_list : Icons.grid_view,
-                          color: Colors.black),
-                      onPressed: () {
-                        setState(() {
-                          isCardView = !isCardView;
-                        });
-                      },
-                    ),
-                  ],
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.07),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star_border, color: Colors.black, size: 24),
+                      const SizedBox(width: 8),
+                      Icon(Icons.search, color: Colors.black, size: 24),
+                      const SizedBox(width: 8),
+                      _buildDropdown(sort, (val) => setState(() => sort = val)),
+                      const SizedBox(width: 8),
+                      _buildDropdown(
+                          region, (val) => setState(() => region = val)),
+                      const SizedBox(width: 8),
+                      _buildDropdown(
+                          keyword, (val) => setState(() => keyword = val)),
+                      const Spacer(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                              isCardView ? Icons.view_list : Icons.grid_view,
+                              color: Colors.black),
+                          onPressed: () {
+                            setState(() {
+                              isCardView = !isCardView;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -84,7 +120,73 @@ class _ExploreScreenState extends State<ExploreScreen>
         controller: _tabController,
         children: [
           isCardView ? _buildLocalPostsCard() : _buildLocalPostsList(),
-          isCardView ? _buildTravelerPostsCard() : _buildTravelerPostsList(),
+          _buildTravelerPostsCard(), // 여행자 게시글은 항상 카드 형태로 표시
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          // 네비게이션 처리
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PurchaseAgencyScreen()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const CommunityHomeScreen()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MenuScreen()),
+              );
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            label: '구매대행',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.send_outlined),
+            label: '메시지',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.all_inclusive),
+            label: '커뮤니티',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: '메뉴',
+          ),
         ],
       ),
     );
@@ -547,50 +649,184 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   // 카드형 여행자 게시글
   Widget _buildTravelerPostsCard() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.8,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: CircleAvatar(
-                      radius: 32, backgroundColor: Colors.grey[300]),
-                ),
-                const SizedBox(height: 8),
-                Text('두세배속8282', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('여행자 | 2024.03.20~03.25', style: TextStyle(fontSize: 12)),
-                Text('서울에서 5박 6일 여행을 계획 중입니다.', style: TextStyle(fontSize: 12)),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('ON/OFF',
-                          style: TextStyle(color: Colors.red, fontSize: 12)),
-                    ),
-                    Icon(Icons.more_vert, size: 18),
-                  ],
-                ),
-              ],
-            ),
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance.collection('traveler_intros').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('여행자 게시글이 없습니다.'));
+        }
+        final docs = snapshot.data!.docs;
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.75,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final nickname = data['nickname'] ?? '여행자';
+            final travelPeriod = data['travel_period'] ?? '';
+            final destination = data['destination'] ?? '';
+            final description = data['description'] ?? '';
+            final isOnline = data['is_online'] ?? false;
+            final createdAt = data['created_at'] as Timestamp?;
+
+            // 날짜 포맷팅
+            String formattedDate = '';
+            if (createdAt != null) {
+              final date = createdAt.toDate();
+              formattedDate =
+                  '${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+            }
+
+            return Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                onTap: () {
+                  // 여행자 상세 페이지로 이동 (필요시 구현)
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 상단: 프로필 이미지와 온라인 상태
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.grey[300],
+                            child: const Icon(Icons.person,
+                                color: Colors.white, size: 20),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color:
+                                  isOnline ? Colors.green[50] : Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isOnline ? Colors.green : Colors.grey,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              isOnline ? 'ON' : 'OFF',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isOnline ? Colors.green : Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // 닉네임
+                      Text(
+                        nickname,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // 여행 기간
+                      if (travelPeriod.isNotEmpty)
+                        Text(
+                          '여행자 | $travelPeriod',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      const SizedBox(height: 4),
+
+                      // 여행지
+                      if (destination.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on,
+                                size: 12, color: Colors.grey),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                destination,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 6),
+
+                      // 설명
+                      if (description.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            description,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+
+                      const SizedBox(height: 8),
+
+                      // 하단: 날짜와 더보기 버튼
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (formattedDate.isNotEmpty)
+                            Text(
+                              formattedDate,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.more_vert, size: 16),
+                            onPressed: () {
+                              // 더보기 메뉴 (필요시 구현)
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

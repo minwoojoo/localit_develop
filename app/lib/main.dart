@@ -40,65 +40,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
-        '/main': (context) => const MainScreen(),
+        '/main': (context) =>
+            const HomeScreen(), // MainScreen 대신 HomeScreen으로 직접 연결
       },
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    PurchaseAgencyScreen(),
-    const ChatScreen(),
-    const CommunityHomeScreen(),
-    const MenuScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_outlined),
-            label: '구매대행',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.send_outlined),
-            label: '메시지',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.all_inclusive),
-            label: '커뮤니티',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu),
-            label: '메뉴',
-          ),
-        ],
-      ),
     );
   }
 }
