@@ -125,200 +125,78 @@ class _ChatScreenState extends State<ChatScreen> {
                 );
               }
 
-              return ListView.builder(
-                itemCount: chatRooms.length,
-                itemBuilder: (context, index) {
-                  final chatRoom = chatRooms[index];
-                  final chatRoomData = chatRoom.data() as Map<String, dynamic>;
+              // 채팅방을 여행자 게시글 기반과 로컬인 게시글 기반으로 분류
+              List<QueryDocumentSnapshot> travelerBasedChatRooms = [];
+              List<QueryDocumentSnapshot> localBasedChatRooms = [];
 
-                  // 현재 사용자가 여행자인지 로컬인인지 확인
-                  final isTraveler = chatRoomData['traveler_id'] == user.uid;
-                  final otherUserId = isTraveler
-                      ? chatRoomData['local_id']
-                      : chatRoomData['traveler_id'];
+              for (var chatRoom in chatRooms) {
+                final chatRoomData = chatRoom.data() as Map<String, dynamic>;
+                final relatedMatchId =
+                    chatRoomData['related_match_id'] as String?;
 
-                  return StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(otherUserId)
-                        .snapshots(),
-                    builder: (context, userSnapshot) {
-                      String nickname = '알 수 없음';
-                      String? profileImageUrl;
+                if (relatedMatchId != null) {
+                  // related_match_id를 통해 매칭 요청 정보 확인
+                  // 여행자 게시글에서 생성된 채팅방인지 로컬인 게시글에서 생성된 채팅방인지 구분
+                  if (chatRoomData['traveler_id'] == user.uid) {
+                    // 현재 사용자가 여행자인 경우 -> 여행자 게시글 기반
+                    travelerBasedChatRooms.add(chatRoom);
+                  } else {
+                    // 현재 사용자가 로컬인인 경우 -> 로컬인 게시글 기반
+                    localBasedChatRooms.add(chatRoom);
+                  }
+                }
+              }
 
-                      if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                        try {
-                          final userData =
-                              userSnapshot.data!.data() as Map<String, dynamic>;
-                          nickname = userData['nickname'] ?? '알 수 없음';
-                          profileImageUrl = userData['profile_image_url'];
-                        } catch (e) {
-                          print('사용자 데이터 파싱 오류: $e');
-                          nickname = '알 수 없음';
-                          profileImageUrl = null;
-                        }
-                      }
+              return ListView(
+                children: [
+                  // 여행자 게시글 기반 채팅방 섹션
+                  if (travelerBasedChatRooms.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.flight,
+                              color: Colors.orange[600], size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '여행자 게시글 매칭',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...travelerBasedChatRooms.map(
+                        (chatRoom) => _buildChatRoomTile(chatRoom, user.uid)),
+                  ],
 
-                      // chat_rooms 컬렉션의 traveler_id/local_id에 따라 프로필 결정
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('locals')
-                            .where('user_id', isEqualTo: otherUserId)
-                            .snapshots(),
-                        builder: (context, localSnapshot) {
-                          String finalNickname = nickname;
-                          String? finalProfileImageUrl = profileImageUrl;
-
-                          // chat_rooms에서 상대방이 traveler_id인지 local_id인지 확인
-                          bool isOtherUserTraveler =
-                              chatRoomData['traveler_id'] == otherUserId;
-                          bool isOtherUserLocal =
-                              chatRoomData['local_id'] == otherUserId;
-
-                          // 상대방이 traveler_id인 경우 무조건 기본 프로필 사용
-                          if (isOtherUserTraveler) {
-                            finalNickname = nickname;
-                            finalProfileImageUrl = profileImageUrl;
-                          } else if (isOtherUserLocal) {
-                            // 상대방이 local_id인 경우 로컬인 프로필 확인
-                            if (localSnapshot.hasData &&
-                                localSnapshot.data!.docs.isNotEmpty) {
-                              try {
-                                final localData = localSnapshot.data!.docs.first
-                                    .data() as Map<String, dynamic>;
-                                final localNickname = localData['nickname'];
-                                if (localNickname != null &&
-                                    localNickname.isNotEmpty) {
-                                  finalNickname = localNickname; // 로컬인 닉네임 사용
-                                }
-                                // 로컬인 프로필 이미지 사용
-                                final localProfileImageUrl =
-                                    localData['profile_image_url'];
-                                if (localProfileImageUrl != null &&
-                                    localProfileImageUrl.isNotEmpty) {
-                                  finalProfileImageUrl = localProfileImageUrl;
-                                }
-                              } catch (e) {
-                                print('로컬인 데이터 파싱 오류: $e');
-                              }
-                            }
-                          }
-
-                          return StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('chat_rooms')
-                                .doc(chatRoom.id)
-                                .collection('messages')
-                                .where('sender_id', isNotEqualTo: user.uid)
-                                .snapshots(),
-                            builder: (context, unreadSnapshot) {
-                              int unreadCount = 0;
-
-                              if (unreadSnapshot.hasData) {
-                                // 읽지 않은 메시지 = 상대방이 보낸 메시지 중 내가 읽지 않은 것
-                                for (var doc in unreadSnapshot.data!.docs) {
-                                  final messageData =
-                                      doc.data() as Map<String, dynamic>;
-                                  final readBy = messageData['read_by'];
-
-                                  // read_by 필드가 없거나 배열이 아닌 경우 빈 배열로 초기화
-                                  List<String> readByList = [];
-                                  if (readBy != null && readBy is List) {
-                                    readByList = List<String>.from(readBy);
-                                  }
-
-                                  // 내가 읽지 않은 메시지인지 확인
-                                  if (!readByList.contains(user.uid)) {
-                                    unreadCount++;
-                                  }
-                                }
-                              }
-
-                              return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundImage:
-                                      finalProfileImageUrl != null &&
-                                              finalProfileImageUrl.isNotEmpty
-                                          ? NetworkImage(finalProfileImageUrl)
-                                          : null,
-                                  backgroundColor: Colors.grey[300],
-                                  child: finalProfileImageUrl == null ||
-                                          finalProfileImageUrl.isEmpty
-                                      ? const Icon(Icons.person,
-                                          color: Colors.white)
-                                      : null,
-                                ),
-                                title: Text(finalNickname),
-                                subtitle: Text(
-                                  isTraveler ? '로컬인과의 채팅' : '여행자와의 채팅',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                trailing: SizedBox(
-                                  height: 48,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        _formatTime(chatRoomData['created_at']),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      if (unreadCount > 0) ...[
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Text(
-                                            unreadCount.toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ] else ...[
-                                        const SizedBox(
-                                            height: 16), // 빈 공간으로 높이 맞춤
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChatRoomScreen(
-                                        chatRoomId: chatRoom.id,
-                                        otherUserId: otherUserId,
-                                        otherUserNickname: finalNickname,
-                                        otherUserProfileImage:
-                                            finalProfileImageUrl,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
+                  // 로컬인 게시글 기반 채팅방 섹션
+                  if (localBasedChatRooms.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on,
+                              color: Colors.blue[600], size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '로컬인 게시글 매칭',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...localBasedChatRooms.map(
+                        (chatRoom) => _buildChatRoomTile(chatRoom, user.uid)),
+                  ],
+                ],
               );
             },
           );
@@ -387,6 +265,188 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChatRoomTile(
+      QueryDocumentSnapshot chatRoom, String currentUserId) {
+    final chatRoomData = chatRoom.data() as Map<String, dynamic>;
+
+    // 현재 사용자가 여행자인지 로컬인인지 확인
+    final isTraveler = chatRoomData['traveler_id'] == currentUserId;
+    final otherUserId =
+        isTraveler ? chatRoomData['local_id'] : chatRoomData['traveler_id'];
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(otherUserId)
+          .snapshots(),
+      builder: (context, userSnapshot) {
+        String nickname = '알 수 없음';
+        String? profileImageUrl;
+
+        if (userSnapshot.hasData && userSnapshot.data!.exists) {
+          try {
+            final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+            nickname = userData['nickname'] ?? '알 수 없음';
+            profileImageUrl = userData['profile_image_url'];
+          } catch (e) {
+            print('사용자 데이터 파싱 오류: $e');
+            nickname = '알 수 없음';
+            profileImageUrl = null;
+          }
+        }
+
+        // chat_rooms 컬렉션의 traveler_id/local_id에 따라 프로필 결정
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('locals')
+              .where('user_id', isEqualTo: otherUserId)
+              .snapshots(),
+          builder: (context, localSnapshot) {
+            String finalNickname = nickname;
+            String? finalProfileImageUrl = profileImageUrl;
+
+            // chat_rooms에서 상대방이 traveler_id인지 local_id인지 확인
+            bool isOtherUserTraveler =
+                chatRoomData['traveler_id'] == otherUserId;
+            bool isOtherUserLocal = chatRoomData['local_id'] == otherUserId;
+
+            // 상대방이 traveler_id인 경우 무조건 기본 프로필 사용
+            if (isOtherUserTraveler) {
+              finalNickname = nickname;
+              finalProfileImageUrl = profileImageUrl;
+            } else if (isOtherUserLocal) {
+              // 상대방이 local_id인 경우 로컬인 프로필 확인
+              if (localSnapshot.hasData &&
+                  localSnapshot.data!.docs.isNotEmpty) {
+                try {
+                  final localData = localSnapshot.data!.docs.first.data()
+                      as Map<String, dynamic>;
+                  final localNickname = localData['nickname'];
+                  if (localNickname != null && localNickname.isNotEmpty) {
+                    finalNickname = localNickname; // 로컬인 닉네임 사용
+                  }
+                  // 로컬인 프로필 이미지 사용
+                  final localProfileImageUrl = localData['profile_image_url'];
+                  if (localProfileImageUrl != null &&
+                      localProfileImageUrl.isNotEmpty) {
+                    finalProfileImageUrl = localProfileImageUrl;
+                  }
+                } catch (e) {
+                  print('로컬인 데이터 파싱 오류: $e');
+                }
+              }
+            }
+
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('chat_rooms')
+                  .doc(chatRoom.id)
+                  .collection('messages')
+                  .where('sender_id', isNotEqualTo: currentUserId)
+                  .snapshots(),
+              builder: (context, unreadSnapshot) {
+                int unreadCount = 0;
+
+                if (unreadSnapshot.hasData) {
+                  // 읽지 않은 메시지 = 상대방이 보낸 메시지 중 내가 읽지 않은 것
+                  for (var doc in unreadSnapshot.data!.docs) {
+                    final messageData = doc.data() as Map<String, dynamic>;
+                    final readBy = messageData['read_by'];
+
+                    // read_by 필드가 없거나 배열이 아닌 경우 빈 배열로 초기화
+                    List<String> readByList = [];
+                    if (readBy != null && readBy is List) {
+                      readByList = List<String>.from(readBy);
+                    }
+
+                    // 내가 읽지 않은 메시지인지 확인
+                    if (!readByList.contains(currentUserId)) {
+                      unreadCount++;
+                    }
+                  }
+                }
+
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: finalProfileImageUrl != null &&
+                            finalProfileImageUrl.isNotEmpty
+                        ? NetworkImage(finalProfileImageUrl)
+                        : null,
+                    backgroundColor: Colors.grey[300],
+                    child: finalProfileImageUrl == null ||
+                            finalProfileImageUrl.isEmpty
+                        ? const Icon(Icons.person, color: Colors.white)
+                        : null,
+                  ),
+                  title: Text(finalNickname),
+                  subtitle: Text(
+                    isTraveler ? '로컬인과의 채팅' : '여행자와의 채팅',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  trailing: SizedBox(
+                    height: 48,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(chatRoomData['created_at']),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        if (unreadCount > 0) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 16), // 빈 공간으로 높이 맞춤
+                        ],
+                      ],
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatRoomScreen(
+                          chatRoomId: chatRoom.id,
+                          otherUserId: otherUserId,
+                          otherUserNickname: finalNickname,
+                          otherUserProfileImage: finalProfileImageUrl,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 

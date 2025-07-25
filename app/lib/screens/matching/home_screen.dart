@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:localit/screens/matching/explore_screen.dart';
 import 'package:localit/screens/auth/profile_screen.dart';
 import 'package:localit/screens/matching/match_requests_screen.dart';
+import 'package:localit/screens/matching/traveler_match_requests_screen.dart';
 import 'package:localit/screens/commerce/purchase_agency_screen.dart';
 import 'package:localit/screens/community/community_home_screen.dart';
 import 'package:localit/screens/chat/chat_screen.dart';
@@ -34,25 +35,50 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user == null) return;
 
     try {
-      // 먼저 사용자가 로컬인인지 확인
+      // 사용자가 로컬인인지 확인
       final localQuery = await FirebaseFirestore.instance
           .collection('locals')
           .where('user_id', isEqualTo: user.uid)
           .get();
 
-      if (localQuery.docs.isEmpty) return; // 로컬인이 아니면 종료
-
-      final localDocId = localQuery.docs.first.id;
-
-      // 해당 로컬인에게 온 pending 상태의 매칭 요청 확인
-      final matchRequestsQuery = await FirebaseFirestore.instance
-          .collection('match_requests')
-          .where('receiver_id', isEqualTo: localDocId)
-          .where('status', isEqualTo: 'pending')
+      // 사용자가 여행자 게시글을 올렸는지 확인
+      final travelerQuery = await FirebaseFirestore.instance
+          .collection('travelers_post')
+          .where('user_id', isEqualTo: user.uid)
           .get();
 
+      bool hasPendingRequests = false;
+
+      // 로컬인인 경우: locals 컬렉션의 문서 ID로 receiver_id 검색
+      if (localQuery.docs.isNotEmpty) {
+        final localDocId = localQuery.docs.first.id;
+        final localMatchRequestsQuery = await FirebaseFirestore.instance
+            .collection('match_requests')
+            .where('receiver_id', isEqualTo: localDocId)
+            .where('status', isEqualTo: 'pending')
+            .get();
+
+        if (localMatchRequestsQuery.docs.isNotEmpty) {
+          hasPendingRequests = true;
+        }
+      }
+
+      // 여행자 게시글을 올린 사용자인 경우: user_id로 receiver_id 검색
+      // (로컬인이든 일반 사용자든 여행자 게시글을 올렸다면 요청을 받을 수 있음)
+      if (travelerQuery.docs.isNotEmpty) {
+        final travelerMatchRequestsQuery = await FirebaseFirestore.instance
+            .collection('match_requests')
+            .where('receiver_id', isEqualTo: user.uid)
+            .where('status', isEqualTo: 'pending')
+            .get();
+
+        if (travelerMatchRequestsQuery.docs.isNotEmpty) {
+          hasPendingRequests = true;
+        }
+      }
+
       // pending 상태의 요청이 있고 아직 팝업을 보여주지 않았다면
-      if (matchRequestsQuery.docs.isNotEmpty && !_hasShownPopup && mounted) {
+      if (hasPendingRequests && !_hasShownPopup && mounted) {
         setState(() {
           _hasShownPopup = true;
         });
@@ -79,14 +105,42 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('아니오'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(); // 다이얼로그 닫기
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MatchRequestsScreen(),
-                  ),
-                );
+
+                // 사용자가 로컬인인지 여행자인지 확인하여 적절한 화면으로 이동
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  final localQuery = await FirebaseFirestore.instance
+                      .collection('locals')
+                      .where('user_id', isEqualTo: user.uid)
+                      .get();
+
+                  final travelerQuery = await FirebaseFirestore.instance
+                      .collection('travelers_post')
+                      .where('user_id', isEqualTo: user.uid)
+                      .get();
+
+                  if (localQuery.docs.isNotEmpty &&
+                      travelerQuery.docs.isEmpty) {
+                    // 로컬인이면서 여행자 게시글을 올리지 않은 경우
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MatchRequestsScreen(),
+                      ),
+                    );
+                  } else if (travelerQuery.docs.isNotEmpty) {
+                    // 여행자 게시글을 올린 사용자인 경우 (로컬인이든 일반 사용자든)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const TravelerMatchRequestsScreen(),
+                      ),
+                    );
+                  }
+                }
               },
               child: const Text('네'),
             ),
@@ -407,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ),
                                               SizedBox(height: 8),
                                               Text(
-                                                '여행 예약, 상품 구매를\n도와드려요',
+                                                '여행 예약, 상품 구매를 도와드려요',
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.black87,

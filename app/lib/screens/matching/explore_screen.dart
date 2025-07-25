@@ -7,6 +7,8 @@ import 'package:localit/screens/commerce/purchase_agency_screen.dart';
 import 'package:localit/screens/chat/chat_screen.dart';
 import 'package:localit/screens/community/community_home_screen.dart';
 import 'package:localit/screens/common/menu_screen.dart';
+import 'package:localit/screens/matching/traveler_input_screen.dart';
+import 'package:localit/screens/matching/traveler_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -28,6 +30,9 @@ class _ExploreScreenState extends State<ExploreScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -123,6 +128,20 @@ class _ExploreScreenState extends State<ExploreScreen>
           _buildTravelerPostsCard(), // 여행자 게시글은 항상 카드 형태로 표시
         ],
       ),
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TravelerInputScreen(),
+                  ),
+                );
+              },
+              backgroundColor: Colors.orange,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -282,20 +301,20 @@ class _ExploreScreenState extends State<ExploreScreen>
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return const CircleAvatar(
-                              radius: 32,
+                              radius: 50,
                               backgroundColor: Colors.grey,
                             );
                           }
                           final url = snapshot.data;
                           return CircleAvatar(
-                            radius: 32,
+                            radius: 50,
                             backgroundImage: (url != null && url.isNotEmpty)
                                 ? NetworkImage(url)
                                 : null,
                             backgroundColor: Colors.grey[300],
                             child: (url == null || url.isEmpty)
                                 ? const Icon(Icons.person,
-                                    color: Colors.white, size: 32)
+                                    color: Colors.white, size: 50)
                                 : null,
                           );
                         },
@@ -481,20 +500,20 @@ class _ExploreScreenState extends State<ExploreScreen>
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return const CircleAvatar(
-                              radius: 32,
+                              radius: 50,
                               backgroundColor: Colors.grey,
                             );
                           }
                           final url = snapshot.data;
                           return CircleAvatar(
-                            radius: 32,
+                            radius: 50,
                             backgroundImage: (url != null && url.isNotEmpty)
                                 ? NetworkImage(url)
                                 : null,
                             backgroundColor: Colors.grey[300],
                             child: (url == null || url.isEmpty)
                                 ? const Icon(Icons.person,
-                                    color: Colors.white, size: 32)
+                                    color: Colors.white, size: 50)
                                 : null,
                           );
                         },
@@ -651,7 +670,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   Widget _buildTravelerPostsCard() {
     return StreamBuilder<QuerySnapshot>(
       stream:
-          FirebaseFirestore.instance.collection('traveler_intros').snapshots(),
+          FirebaseFirestore.instance.collection('travelers_post').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -664,7 +683,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.65,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
@@ -672,10 +691,12 @@ class _ExploreScreenState extends State<ExploreScreen>
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             final nickname = data['nickname'] ?? '여행자';
-            final travelPeriod = data['travel_period'] ?? '';
-            final destination = data['destination'] ?? '';
+            final age = data['age'] ?? '';
+            final nationality = data['nationality'] ?? '';
+            final gender = data['gender'] ?? '';
+            final visitSchedule = data['visit_schedule'] ?? '';
             final description = data['description'] ?? '';
-            final isOnline = data['is_online'] ?? false;
+            final matchingMethod = data['matching_method'] ?? '';
             final createdAt = data['created_at'] as Timestamp?;
 
             // 날짜 포맷팅
@@ -693,7 +714,14 @@ class _ExploreScreenState extends State<ExploreScreen>
               ),
               child: InkWell(
                 onTap: () {
-                  // 여행자 상세 페이지로 이동 (필요시 구현)
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TravelerDetailScreen(
+                        travelerPostId: docs[index].id,
+                      ),
+                    ),
+                  );
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
@@ -701,78 +729,98 @@ class _ExploreScreenState extends State<ExploreScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 상단: 프로필 이미지와 온라인 상태
+                      // 상단: 프로필 이미지와 매칭 방식
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.grey[300],
-                            child: const Icon(Icons.person,
-                                color: Colors.white, size: 20),
+                          // 프로필 이미지
+                          FutureBuilder<String?>(
+                            future:
+                                getProfileImageUrl(data['profile_image_url']),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(Icons.person,
+                                      color: Colors.white, size: 40),
+                                );
+                              }
+                              final url = snapshot.data;
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  image: (url != null && url.isNotEmpty)
+                                      ? DecorationImage(
+                                          image: NetworkImage(url),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                  color: (url == null || url.isEmpty)
+                                      ? Colors.grey[300]
+                                      : null,
+                                ),
+                                child: (url == null || url.isEmpty)
+                                    ? const Icon(Icons.person,
+                                        color: Colors.white, size: 40)
+                                    : null,
+                              );
+                            },
                           ),
                           const Spacer(),
+                          // 매칭 방식 태그
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color:
-                                  isOnline ? Colors.green[50] : Colors.grey[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isOnline ? Colors.green : Colors.grey,
-                                width: 1,
-                              ),
+                              color: Colors.orange[100],
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              isOnline ? 'ON' : 'OFF',
+                              matchingMethod,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isOnline ? Colors.green : Colors.grey,
+                                color: Colors.black87,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       // 닉네임
                       Text(
                         nickname,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 16,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
 
-                      // 여행 기간
-                      if (travelPeriod.isNotEmpty)
-                        Text(
-                          '여행자 | $travelPeriod',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      const SizedBox(height: 4),
-
-                      // 여행지
-                      if (destination.isNotEmpty)
+                      // 나이, 국적, 성별 (사람 아이콘)
+                      if (age.isNotEmpty &&
+                          nationality.isNotEmpty &&
+                          gender.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(Icons.location_on,
-                                size: 12, color: Colors.grey),
-                            const SizedBox(width: 2),
+                            const Icon(Icons.person,
+                                size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                destination,
+                                '${age}세 | $nationality | ${gender == '남' ? '남자' : '여자'}',
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: Colors.grey,
                                 ),
                                 maxLines: 1,
@@ -781,46 +829,52 @@ class _ExploreScreenState extends State<ExploreScreen>
                             ),
                           ],
                         ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
 
-                      // 설명
-                      if (description.isNotEmpty)
-                        Expanded(
-                          child: Text(
-                            description,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-
-                      const SizedBox(height: 8),
-
-                      // 하단: 날짜와 더보기 버튼
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (formattedDate.isNotEmpty)
-                            Text(
-                              formattedDate,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
+                      // 위치 정보 (위치 아이콘)
+                      if (data['accommodation_info'] != null &&
+                          data['accommodation_info'].toString().isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on,
+                                size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                data['accommodation_info'],
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          IconButton(
-                            icon: const Icon(Icons.more_vert, size: 16),
-                            onPressed: () {
-                              // 더보기 메뉴 (필요시 구현)
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      const SizedBox(height: 4),
+
+                      // 해시태그 (북마크 아이콘)
+                      if (data['hashtags'] != null &&
+                          (data['hashtags'] as List).isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.bookmark,
+                                size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                (data['hashtags'] as List).take(3).join(' | '),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),

@@ -8,36 +8,16 @@ import 'package:localit/screens/chat/chat_screen.dart';
 import 'package:localit/screens/community/community_home_screen.dart';
 import 'package:localit/screens/common/menu_screen.dart';
 
-class ExploreDetailScreen extends StatefulWidget {
-  final String localId;
-  const ExploreDetailScreen({super.key, required this.localId});
+class TravelerDetailScreen extends StatefulWidget {
+  final String travelerPostId;
+  const TravelerDetailScreen({super.key, required this.travelerPostId});
 
   @override
-  State<ExploreDetailScreen> createState() => _ExploreDetailScreenState();
+  State<TravelerDetailScreen> createState() => _TravelerDetailScreenState();
 }
 
-class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
+class _TravelerDetailScreenState extends State<TravelerDetailScreen> {
   int _selectedIndex = 0;
-
-  String meetupTypeText(dynamic value) {
-    if (value == null) return '';
-    if (value is String) {
-      final v = value.toLowerCase();
-      if (v.contains('on') && v.contains('off')) return '온/오프';
-      if (v == '둘 다' || v == 'both') return '온/오프';
-      if (v.contains('on')) return '온';
-      if (v.contains('off')) return '오프';
-      return value;
-    }
-    if (value is List) {
-      final list = value.map((e) => e.toString().toLowerCase()).toList();
-      if (list.contains('on') && list.contains('off')) return '온/오프';
-      if (list.contains('on')) return '온';
-      if (list.contains('off')) return '오프';
-      return list.join(', ');
-    }
-    return value.toString();
-  }
 
   Future<String?> getProfileImageUrl(String? path) async {
     if (path == null || path.isEmpty) return null;
@@ -61,7 +41,26 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
     return <T>[];
   }
 
-  Future<void> _showRequestDialog(BuildContext context, String localId) async {
+  // 사용자의 trust_score를 가져오는 함수
+  Future<double> getUserTrustScore(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        return (userData?['trust_score'] ?? 30.0).toDouble();
+      }
+      return 30.0; // 기본값
+    } catch (e) {
+      return 30.0; // 기본값
+    }
+  }
+
+  Future<void> _showMatchRequestDialog(
+      BuildContext context, String travelerPostId) async {
     // 현재 로그인한 사용자 확인
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -71,30 +70,25 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
       return;
     }
 
-    // 로컬인 문서에서 user_id 확인
+    // 여행자 게시글에서 user_id 확인
     try {
-      final localDoc = await FirebaseFirestore.instance
-          .collection('locals')
-          .doc(localId)
+      final travelerDoc = await FirebaseFirestore.instance
+          .collection('travelers_post')
+          .doc(travelerPostId)
           .get();
 
-      if (!localDoc.exists) {
+      if (!travelerDoc.exists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로컬인 정보를 찾을 수 없습니다')),
+          const SnackBar(content: Text('여행자 정보를 찾을 수 없습니다')),
         );
         return;
       }
 
-      final localData = localDoc.data() as Map<String, dynamic>;
-      final localUserId = localData['user_id'];
-
-      // 디버깅을 위한 로그
-      print('DEBUG: localUserId = $localUserId');
-      print('DEBUG: current user.uid = ${user.uid}');
-      print('DEBUG: localId = $localId');
+      final travelerData = travelerDoc.data() as Map<String, dynamic>;
+      final travelerUserId = travelerData['user_id'];
 
       // 본인의 게시글인지 확인
-      if (localUserId == user.uid) {
+      if (travelerUserId == user.uid) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('본인의 게시글입니다'),
@@ -117,7 +111,7 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('매칭 요청'),
+          title: const Text('매칭 요청하기'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -125,7 +119,7 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
                 controller: messageController,
                 decoration: const InputDecoration(
                   labelText: '메시지',
-                  hintText: '로컬인에게 전할 메시지를 입력하세요',
+                  hintText: '여행자에게 전할 메시지를 입력하세요',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -157,7 +151,7 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
 
                 await _submitMatchRequest(
                   context,
-                  localId,
+                  travelerPostId,
                   messageController.text.trim(),
                   preferredDateController.text.trim(),
                 );
@@ -171,7 +165,7 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
     );
   }
 
-  Future<void> _submitMatchRequest(BuildContext context, String localId,
+  Future<void> _submitMatchRequest(BuildContext context, String travelerPostId,
       String message, String preferredDate) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -191,14 +185,31 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
       final userData = userDoc.data();
       final requesterNickname = userData?['nickname'] ?? '알 수 없음';
 
+      // 여행자 게시글 정보 가져오기
+      final travelerDoc = await FirebaseFirestore.instance
+          .collection('travelers_post')
+          .doc(travelerPostId)
+          .get();
+
+      if (!travelerDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('여행자 정보를 찾을 수 없습니다')),
+        );
+        return;
+      }
+
+      final travelerData = travelerDoc.data() as Map<String, dynamic>;
+      final travelerUserId = travelerData['user_id'];
+
       // 매칭 요청 저장
       await FirebaseFirestore.instance.collection('match_requests').add({
-        'requester_id': user.uid,
-        'receiver_id': localId,
+        'requester_id': user.uid, // 요청자 ID
+        'receiver_id': travelerUserId, // 여행자 ID (받는 사람)
+        'traveler_post_id': travelerPostId, // 여행자 게시글 ID
         'requester_nickname': requesterNickname,
-        'status': 'pending',
-        'preferred_date': preferredDate,
         'message': message,
+        'preferred_date': preferredDate,
+        'status': 'pending',
         'created_at': FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
       });
@@ -226,7 +237,7 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          '🌏 로컬인 소개',
+          '✈️ 여행자 소개',
           style: TextStyle(color: Colors.black, fontSize: 16),
         ),
         centerTitle: true,
@@ -234,8 +245,8 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
-            .collection('locals')
-            .doc(widget.localId)
+            .collection('travelers_post')
+            .doc(widget.travelerPostId)
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -247,17 +258,25 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
 
           final nickname = data['nickname'] ?? '';
-          final schoolOrCompany = data['school_or_company'] ?? '';
-          final languages = _convertToList<String>(data['languages']);
-          final tags = _convertToList<String>(data['tags']);
-          final isGraduated = data['is_graduated'] ?? false;
-          final mannerScore = data['manner_score'] ?? 60.0;
-          final matchCount = data['match_count'] ?? 0;
-          final preferredLocation = data['preferred_location'] ?? '';
-          final preferredMeetup = data['preferred_meetup'] ?? '';
-          final personalInfo = data['personal_info'] ?? '';
-          final introduction = data['introduction'] ?? '';
-          final interests = _convertToList<String>(data['interests']);
+          final age = data['age'] ?? '';
+          final nationality = data['nationality'] ?? '';
+          final gender = data['gender'] ?? '';
+          final accommodationInfo = data['accommodation_info'] ?? '';
+          final matchingMethod = data['matching_method'] ?? '';
+          final visitSchedule = data['visit_schedule'] ?? '';
+          final hashtags = _convertToList<String>(data['hashtags']);
+          final description = data['description'] ?? '';
+          final matchingCount = data['matching_count'] ?? 0;
+          final userId = data['user_id'] ?? '';
+          final createdAt = data['created_at'] as Timestamp?;
+
+          // 날짜 포맷팅
+          String formattedDate = '';
+          if (createdAt != null) {
+            final date = createdAt.toDate();
+            formattedDate =
+                '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -312,99 +331,56 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
                                 ),
                               ),
                               const Icon(Icons.verified,
-                                  color: Colors.green, size: 20),
+                                  color: Colors.green, size: 18),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          // 학교/직장 정보
-                          if (schoolOrCompany.isNotEmpty)
+                          // 나이, 국적, 성별
+                          if (age.isNotEmpty &&
+                              nationality.isNotEmpty &&
+                              gender.isNotEmpty)
                             Text(
-                              schoolOrCompany,
+                              '${age}세 | $nationality | $gender',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
                             ),
                           const SizedBox(height: 4),
-                          // 가능언어
-                          if (languages.isNotEmpty)
-                            Row(
-                              children: [
-                                const Icon(Icons.book,
-                                    size: 16, color: Colors.grey),
-                                const SizedBox(width: 4),
-                                Text(
-                                  languages.join(' | '),
-                                  style: const TextStyle(
+                          // 누적매칭횟수
+                          Text(
+                            '누적매칭횟수 ${matchingCount}회',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // 매너온도 (FutureBuilder로 trust_score 가져오기)
+                          FutureBuilder<double>(
+                            future: getUserTrustScore(userId),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Text(
+                                  '매너 온도 로딩중...',
+                                  style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
                                   ),
+                                );
+                              }
+                              final trustScore = snapshot.data ?? 30.0;
+                              return Text(
+                                '매너 온도 ${(trustScore - 2).toInt()} ~ ${(trustScore + 2).toInt()}°C',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
-                          const SizedBox(height: 8),
-                          // 배지
-                          if (isGraduated || interests.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (isGraduated)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      '대학졸업',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                if (interests.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    '관심분야',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: interests
-                                        .take(3)
-                                        .map((interest) => Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.blue[50],
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                interest,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.blue,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ))
-                                        .toList(),
-                                  ),
-                                ],
-                              ],
-                            ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -416,32 +392,36 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
                 const Divider(color: Colors.black, thickness: 1),
                 const SizedBox(height: 24),
 
-                // 회원 정보 섹션
+                // 여행 정보 섹션
                 const Text(
-                  '회원 정보',
+                  '여행 정보',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
-                _infoRow('희망 지역', preferredLocation),
-                _infoRow('매칭 방식',
-                    '${meetupTypeText(preferredMeetup)} | 누적매칭횟수 ${matchCount}회'),
-                _infoRow(
-                    '인적 사항', personalInfo.isNotEmpty ? personalInfo : '정보 없음'),
-                _infoRow('매너 온도',
-                    '${(mannerScore - 6).round()}~${(mannerScore + 6).round()}°C',
-                    valueColor: Colors.orange),
+                _infoRow('숙소 정보', accommodationInfo),
+                _infoRow('매칭 방식', matchingMethod),
+                _infoRow('방문 일정', visitSchedule),
+                if (formattedDate.isNotEmpty) _infoRow('게시일', formattedDate),
                 const SizedBox(height: 16),
 
-                // 관심사 태그
-                if (tags.isNotEmpty)
+                // 해시태그
+                if (hashtags.isNotEmpty) ...[
+                  const Text(
+                    '관심 해시태그',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
-                    runSpacing: 8,
-                    children: tags
-                        .map((tag) => Container(
+                    runSpacing: 4,
+                    children: hashtags
+                        .map((hashtag) => Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -449,26 +429,35 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                '#$tag',
-                                style: TextStyle(
+                                '#$hashtag',
+                                style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.blue[700],
+                                  color: Colors.blue,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ))
                         .toList(),
                   ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                ],
 
                 // 구분선
                 const Divider(color: Colors.black, thickness: 1),
                 const SizedBox(height: 24),
 
-                // 자기소개
-                if (introduction.isNotEmpty)
+                // 여행 자기소개
+                const Text(
+                  '여행 자기소개',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (description.isNotEmpty)
                   Text(
-                    introduction,
+                    description,
                     style: const TextStyle(
                       fontSize: 14,
                       height: 1.6,
@@ -500,7 +489,8 @@ class _ExploreDetailScreenState extends State<ExploreDetailScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () async {
-                          await _showRequestDialog(context, widget.localId);
+                          await _showMatchRequestDialog(
+                              context, widget.travelerPostId);
                         },
                         child: const Text(
                           '요청하기',
