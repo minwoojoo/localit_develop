@@ -1,20 +1,43 @@
 ### 회원가입
-POST http://localhost:5001/localit-ef984/asia-northeast3/registerUser
+POST https://us-central1-localit-ef984.cloudfunctions.net/registerUser
 Content-Type: application/json
 
 {
   "data": {
-    "uid": "test123",
-    "email": "test@example.com",
-    "nickname": "테스트유저",
+    "uid": "local04",
+    "email": "local04@example.com",
+    "nickname": "로컬유저",
     "type": "traveler",
-    "phone_number": "010-1234-5678",
-    "languages": ["한국어", "영어"]
+    "phone_number": "010-9999-8888",
+    "languages": ["ko"],
+    "profileImageUrl": "https://...",
+    "certified": true,
+    "age": 28,
+    "gender": "남",
+    "preferred_meetup": "오프",
+    "preferred_location": "Hongdae",
+    "interests": ["food", "culture"],
+    "hobbies": "등산, 사진",
+    "verification_data": { "ocr_id_image": "filename.jpg" },
+    "verification_status": "approved"
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### 사용자 정보 조회
-POST http://localhost:5001/localit-ef984/asia-northeast3/getUserProfile
+POST http://localhost:5001/localit-ef984/us-central1/getUserProfile
 Content-Type: application/json
 
 {
@@ -24,7 +47,7 @@ Content-Type: application/json
 }
 
 ### 사용자 정보 수정
-POST http://localhost:5001/localit-ef984/asia-northeast3/updateUserProfile
+POST http://localhost:5001/localit-ef984/us-central1/updateUserProfile
 Content-Type: application/json
 
 {
@@ -36,7 +59,7 @@ Content-Type: application/json
 }
 
 ### 매칭 요청
-POST http://localhost:5001/localit-ef984/asia-northeast3/requestMatching
+POST http://localhost:5001/localit-ef984/us-central1/requestMatching
 Content-Type: application/json
 
 {
@@ -53,7 +76,7 @@ Content-Type: application/json
 }
 
 ### 매칭 수락
-POST http://localhost:5001/localit-ef984/asia-northeast3/acceptMatching
+POST http://localhost:5001/localit-ef984/us-central1/acceptMatching
 Content-Type: application/json
 
 {
@@ -63,7 +86,7 @@ Content-Type: application/json
 }
 
 ### 채팅 메시지 전송
-POST http://localhost:5001/localit-ef984/asia-northeast3/postMessage
+POST http://localhost:5001/localit-ef984/us-central1/postMessage
 Content-Type: application/json
 
 {
@@ -75,7 +98,7 @@ Content-Type: application/json
 }
 
 ### 여행객 소개글 등록
-POST http://localhost:5001/localit-ef984/asia-northeast3/postTravelerIntro
+POST http://localhost:5001/localit-ef984/us-central1/postTravelerIntro
 Content-Type: application/json
 
 {

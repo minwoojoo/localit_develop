@@ -19,4 +19,4 @@ class Notification {
     this.created_at = data.created_at;
   }
 }
-module.exports = Notification; 
+module.exports = Notification;

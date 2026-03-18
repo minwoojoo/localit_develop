@@ -22,4 +22,4 @@ class PurchaseRequest {
   }
 }
 
-module.exports = PurchaseRequest; 
+module.exports = PurchaseRequest;

@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 프로필 이미지는 모든 사용자가 읽을 수 있도록 허용
+    match /profile_images/{imageId} {
+      allow read: if true;  // 모든 사용자가 읽기 가능
+      allow write: if request.auth != null;  // 인증된 사용자만 쓰기 가능
+    }
+    
+    // 기타 파일들
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -21,4 +21,4 @@ class Review {
     this.created_at = data.created_at;
   }
 }
-module.exports = Review; 
+module.exports = Review;

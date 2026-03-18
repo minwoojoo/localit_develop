@@ -7,70 +7,44 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const { onRequest, onCall } = require("firebase-functions/v2/https");
-const { beforeUserCreated } = require("firebase-functions/v2/identity");
-const express = require('express');
-const app = express();
-app.use(express.json());
+const {onRequest} = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
+const authController = require("./controller/authController");
+const matchingController = require("./controller/matchingController");
+const chatController = require("./controller/chatController");
+const introController = require("./controller/introController");
+const userController = require("./controller/userController");
 
-const { registerUser, onUserCreate } = require('./controller/authController');
-const { requestMatching, acceptMatching } = require('./controller/matchingController');
-const { postMessage } = require('./controller/chatController');
-const { postTravelerIntro } = require('./controller/introController');
-const { getUserProfile, updateUserProfile } = require('./controller/userController');
-const { admin } = require('./config/firebase');
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
 
-// Auth 트리거
-exports.onUserCreate = beforeUserCreated({
-  region: 'asia-northeast3'
-}, onUserCreate);
+// exports.helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
 
-// Callable Functions (v2)
-exports.registerUser = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await registerUser(request.data, { json: (data) => data });
-});
+// 회원가입
+exports.registerUser = onRequest(authController.registerUser);
+exports.checkEmailDuplicate = onRequest(authController.checkEmailDuplicate);
 
-exports.requestMatching = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await requestMatching(request.data, { json: (data) => data });
-});
+// 채팅 관련 (구현 필요시 아래와 같이 추가)
+// exports.sendMessage = onRequest(chatController.sendMessage);
 
-exports.acceptMatching = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await acceptMatching(request.data, { json: (data) => data });
-});
+// 여행객 소개글 등록 (구현 필요시 아래와 같이 추가)
+// exports.postTravelerIntro = onRequest(introController.postTravelerIntro);
 
-exports.postMessage = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await postMessage(request.data, { json: (data) => data });
-});
+// 매칭 관련 (구현 필요시 아래와 같이 추가)
+// exports.requestMatching = onRequest(matchingController.requestMatching);
 
-exports.postTravelerIntro = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await postTravelerIntro(request.data, { json: (data) => data });
-});
+// 사용자 정보 조회 (구현 필요시 아래와 같이 추가)
+// exports.getUserProfile = onRequest(userController.getUserProfile);
 
-exports.getUserProfile = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await getUserProfile(request.data, { json: (data) => data });
-});
-
-exports.updateUserProfile = onCall({
-  cors: true,
-  region: 'asia-northeast3'
-}, async (request) => {
-  return await updateUserProfile(request.data, { json: (data) => data });
+// 사용자 정보 수정
+exports.updateUserProfile = onRequest(async (req, res) => {
+  try {
+    const result = await userController.updateUserProfile(req.body);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(500).json({error: e.message});
+  }
 });

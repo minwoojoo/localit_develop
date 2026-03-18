@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:localit/screens/home_screen.dart';
-import 'package:localit/screens/explore_screen.dart';
-import 'package:localit/screens/chat_screen.dart';
-import 'package:localit/screens/profile_screen.dart';
-import 'package:localit/screens/menu_screen.dart';
-import 'package:localit/screens/onboarding_screen.dart';
-import 'package:localit/screens/login_screen.dart';
-import 'package:localit/screens/purchase_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'firebase_options.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
+import 'package:localit/screens/auth/profile_screen.dart';
+import 'package:localit/screens/common/menu_screen.dart';
+import 'package:localit/screens/common/onboarding_screen.dart';
+import 'package:localit/screens/auth/login_screen.dart';
+import 'package:localit/screens/commerce/purchase_agency_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -45,9 +58,9 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const PurchaseScreen(),
+    PurchaseAgencyScreen(),
     const ChatScreen(),
-    const ProfileScreen(),
+    const CommunityHomeScreen(),
     const MenuScreen(),
   ];
 

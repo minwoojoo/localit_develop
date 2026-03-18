@@ -1,60 +1,120 @@
-const { createUser, createTraveler, createLocal } = require('../domain/user');
-const { admin } = require('../config/firebase');
-const User = require('../entity/user');
+const {db} = require("../config/firebase");
 
-// 회원가입
-async function registerUser(data) {
-  const { uid, email, nickname, type, ...rest } = data;
-  await createUser(uid, {
-    email, nickname, type,
-    created_at: new Date(),
-    updated_at: new Date()
-  });
-  if (type === 'traveler') {
-    await createTraveler(uid, { ...rest, created_at: new Date(), updated_at: new Date() });
-  } else if (type === 'local') {
-    await createLocal(uid, { ...rest, created_at: new Date(), updated_at: new Date() });
-  }
-  return { success: true };
-}
+// CORS 설정 함수
+const setCorsHeaders = (res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+};
 
-// 회원가입 후 Firestore에 사용자 프로필 자동 생성 (Auth 트리거)
-async function onUserCreate(event) {
-  const user = event.data;
-  const userData = {
-    email: user.email,
-    nickname: user.displayName || '',
-    phone_number: user.phoneNumber || '',
-    type: 'traveler', // 기본값, 프론트에서 선택 가능
-    profileImageUrl: user.photoURL || '',
-    languages: [],
-    trust_score: 100,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  await admin.firestore().collection('users').doc(user.uid).set(userData);
-}
-
-// (선택) 회원가입 API (프론트에서 직접 호출 시)
+// 회원가입 API
 exports.registerUser = async (req, res) => {
+  // CORS preflight 요청 처리
+  if (req.method === "OPTIONS") {
+    setCorsHeaders(res);
+    res.status(204).send("");
+    return;
+  }
+
+  setCorsHeaders(res);
+
   try {
-    const { uid, email, nickname, phone_number, type, profileImageUrl, languages } = req.body;
+    let body = req.body;
+    if (!body) {
+      body = JSON.parse(req.rawBody.toString());
+    }
+    const data = body.data || body;
+
+    const {
+      uid,
+      email,
+      nickname,
+      phone_number,
+      type, // "traveler" 또는 "local"
+      profileImageUrl,
+      languages,
+      // travelers용
+      preferred_regions,
+      travel_style,
+      // locals용
+      certified,
+      age,
+      gender,
+      preferred_meetup,
+      preferred_location,
+      interests,
+      hobbies,
+      verification_data,
+      verification_status,
+    } = data;
+
+    // users 컬렉션에 모든 정보 저장 (traveler 필드 포함)
     const userData = {
       email,
       nickname,
       phone_number,
       type,
-      profileImageUrl,
-      languages,
-      trust_score: 100,
+      profileImageUrl: profileImageUrl || "",
+      languages: languages || [],
+      trust_score: 80,
+      preferred_regions: preferred_regions || [],
+      travel_style: travel_style || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    await admin.firestore().collection('users').doc(uid).set(userData);
-    res.status(201).json({ success: true });
+    await db.collection("users").doc(uid).set(userData);
+
+    // locals 컬렉션에만 추가 정보 저장
+    if (type === "local") {
+      const localData = {
+        certified: certified || false,
+        age: age || null,
+        gender: gender || "",
+        preferred_meetup: preferred_meetup || "",
+        preferred_location: preferred_location || "",
+        interests: interests || [],
+        hobbies: hobbies || "",
+        verification_data: verification_data || {},
+        verification_status: verification_status || "pending",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      await db.collection("locals").doc(uid).set(localData);
+    }
+
+    return res.status(201).json({success: true});
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("registerUser error:", e);
+    return res.status(500).json({error: e.message});
   }
 };
 
-module.exports = { registerUser, onUserCreate };
+// 이메일 중복 확인
+exports.checkEmailDuplicate = async (req, res) => {
+  // CORS preflight 요청 처리
+  if (req.method === "OPTIONS") {
+    setCorsHeaders(res);
+    res.status(204).send("");
+    return;
+  }
+
+  setCorsHeaders(res);
+
+  try {
+    let body = req.body;
+    if (!body) {
+      body = JSON.parse(req.rawBody.toString());
+    }
+    const {email} = body.data || body;
+    if (!email) {
+      return res.status(400).json({error: "이메일이 필요합니다."});
+    }
+    const snapshot = await db.collection("users").where("email", "==", email).get();
+    if (!snapshot.empty) {
+      return res.json({exists: true});
+    }
+    return res.json({exists: false});
+  } catch (e) {
+    return res.status(500).json({error: e.message});
+  }
+};
