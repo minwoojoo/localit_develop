@@ -3,9 +3,18 @@ import 'package:localit/screens/auth/profile_screen.dart';
 import 'package:localit/screens/matching/explore_screen.dart';
 import 'package:localit/screens/commerce/purchase_agency_screen.dart';
 import 'package:localit/screens/community/community_home_screen.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
 
-class MenuScreen extends StatelessWidget {
+class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {
+  int _selectedIndex = 4; // 메뉴 탭이 선택된 상태
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +86,69 @@ class MenuScreen extends StatelessWidget {
                 },
               ),
             ],
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          // 네비게이션 처리
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PurchaseAgencyScreen()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const CommunityHomeScreen()),
+              );
+              break;
+            case 4:
+              // 현재 화면이므로 아무것도 하지 않음
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            label: '구매대행',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.send_outlined),
+            label: '메시지',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.all_inclusive),
+            label: '커뮤니티',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: '메뉴',
           ),
         ],
       ),

@@ -442,8 +442,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       bool isMe, String content, Timestamp? timestamp, List<String> readBy) {
     // 상대방이 읽었는지 확인 (안전한 타입 체크)
     bool isRead = false;
-    if (readBy.isNotEmpty) {
+    if (isMe && readBy.isNotEmpty) {
+      // 내가 보낸 메시지이고, readBy 배열에 상대방 ID가 포함되어 있으면 읽음
       isRead = readBy.contains(widget.otherUserId);
+      print(
+          'DEBUG: 메시지 읽음 상태 - isMe: $isMe, readBy: $readBy, otherUserId: ${widget.otherUserId}, isRead: $isRead');
     }
 
     return Container(
@@ -587,31 +590,38 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatMessageTime(timestamp),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isMe ? Colors.white70 : Colors.grey[600],
-                        ),
-                      ),
-                      if (isMe) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          isRead ? Icons.done_all : Icons.done,
-                          size: 16,
-                          color: isRead ? Colors.blue : Colors.white70,
-                        ),
-                      ],
-                    ],
+                  Text(
+                    _formatMessageTime(timestamp),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isMe ? Colors.white70 : Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           if (isMe) ...[
+            const SizedBox(width: 4),
+            if (isRead) ...[
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.blue,
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.done,
+                  size: 14,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 16,

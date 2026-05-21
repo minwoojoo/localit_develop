@@ -141,6 +141,23 @@ class MatchRequestsScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 8),
+                          ] else ...[
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today,
+                                    size: 16, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '희망 날짜: 입력하지 않음',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
                           ],
                           Text(
                             message,

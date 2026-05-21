@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:localit/screens/matching/home_screen.dart';
+import 'package:localit/screens/chat/chat_screen.dart';
+import 'package:localit/screens/community/community_home_screen.dart';
+import 'package:localit/screens/common/menu_screen.dart';
 
 class PurchaseAgencyScreen extends StatefulWidget {
   const PurchaseAgencyScreen({super.key});
@@ -10,6 +14,7 @@ class PurchaseAgencyScreen extends StatefulWidget {
 class _PurchaseAgencyScreenState extends State<PurchaseAgencyScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedIndex = 1; // 구매대행 탭이 선택된 상태
 
   @override
   void initState() {
@@ -135,6 +140,68 @@ class _PurchaseAgencyScreenState extends State<PurchaseAgencyScreen>
                 _buildPurchaseAgencyTab(),
               ],
             ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          // 네비게이션 처리
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+              break;
+            case 1:
+              // 현재 화면이므로 아무것도 하지 않음
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const CommunityHomeScreen()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MenuScreen()),
+              );
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            label: '구매대행',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.send_outlined),
+            label: '메시지',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.all_inclusive),
+            label: '커뮤니티',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: '메뉴',
           ),
         ],
       ),

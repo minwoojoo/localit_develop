@@ -124,6 +124,7 @@ class ProfileScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           Expanded(
+                            flex: 2, // 가로 길이 조정
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
@@ -143,7 +144,7 @@ class ProfileScreen extends StatelessWidget {
                               child: const Text(
                                 '로컬인 프로필',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -152,6 +153,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
+                            flex: 2, // 가로 길이 조정
                             child: isLocalRegistered
                                 ? ElevatedButton(
                                     style: ElevatedButton.styleFrom(
@@ -179,7 +181,7 @@ class ProfileScreen extends StatelessWidget {
                                     child: const Text(
                                       '로컬인 등록 해제',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -205,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                                     child: const Text(
                                       '로컬인 등록',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),

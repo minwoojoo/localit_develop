@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "localit-ef984"
-  }
+  },
+  "targets": {
+    "localit-ef984": {
+      "hosting": {
+        "localit-ef984": [
+          "localit-ef984"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

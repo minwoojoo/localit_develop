@@ -104,65 +104,58 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 60),
-                // LocalIt 로고 (파란색 테두리 박스 안에)
+                // LocalIt 로고
                 Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blue, width: 1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // LocalIt 로고
-                        Image.asset(
-                          'assets/logo.png',
-                          height: 60,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // LocalIt 로고
+                      Image.asset(
+                        'assets/logo.png',
+                        height: 60,
+                      ),
+                      const SizedBox(height: 8),
+                      // 태그라인
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '신뢰',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.pink[400],
+                                height: 1.4,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '할 수 있는 ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                                height: 1.4,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '현지인',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.pink[400],
+                                height: 1.4,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '들의 실제 여행정보',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        // 태그라인
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: '신뢰',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.pink[400],
-                                  height: 1.4,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '할 수 있는 ',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                  height: 1.4,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '현지인',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.pink[400],
-                                  height: 1.4,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '들의 실제 여행정보',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 40),
