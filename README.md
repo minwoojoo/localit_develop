@@ -2,6 +2,8 @@
 
 LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대행, 커뮤니티 활동을 지원하는 매칭 서비스입니다. Flutter Web 기반의 클라이언트와 Firebase 서버리스 백엔드를 분리해 구성했으며, 인증, 사용자 프로필, 매칭, 채팅, 미디어 저장, 배포까지 서비스 운영에 필요한 전체 흐름을 직접 설계하고 구현한 프로젝트입니다.
 
+<br>
+
 ## 프로젝트 개요
 
 | 구분 | 내용 |
@@ -13,6 +15,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 | Infrastructure / DB | Firebase Hosting, Cloud Firestore, Firebase Storage |
 | 주요 기능 | 회원가입, 로그인, 프로필 관리, 현지인/여행객 매칭, 채팅, 커뮤니티, 구매 대행 |
 
+<br>
+
 ## 핵심 성과
 
 - Flutter Web 빌드 결과물을 Firebase Hosting에 연결해 웹 서비스 배포 흐름을 구성했습니다.
@@ -21,9 +25,13 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - Cloud Firestore 문서 구조를 `shared_models`의 JSON Schema로 정리해 프론트엔드 모델과 백엔드 데이터 구조 간의 기준을 명확히 했습니다.
 - Firebase Storage Rules를 구성해 프로필 이미지와 사용자 업로드 파일의 접근 범위를 분리했습니다.
 
+<br>
+
 ## 배포 화면 미리보기
 
 실제 Firebase Hosting 배포 웹을 실행한 뒤 캡처 및 녹화한 화면입니다.
+
+<br>
 
 ### 주요 화면
 
@@ -35,11 +43,15 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 | --- | --- |
 | ![예약 대행 화면](jpg-file/예약대행화면.jpg) | ![구매 대행 화면](jpg-file/구매대행화면.jpg) |
 
+<br>
+
 ### 등록 플로우
 
 | 로컬인 등록 | 여행 게시글 등록 |
 | --- | --- |
 | ![로컬인 등록](gif-file/로컬인등록.gif) | ![여행 게시글 등록](gif-file/여행게시글등록.gif) |
+
+<br>
 
 ### 매칭 및 채팅 플로우
 
@@ -47,7 +59,11 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 | --- | --- |
 | ![로컬인 매칭](gif-file/로컬인매칭.gif) | ![여행자 매칭](gif-file/여행자매칭.gif) |
 
+<br>
+
 ## 주요 기능
+
+<br>
 
 ### 사용자 인증 및 프로필
 
@@ -56,6 +72,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - 닉네임, 연락처, 언어, 관심사, 인증 정보 등 사용자 프로필 저장
 - 현지인 등록 및 인증 상태 관리 구조 설계
 
+<br>
+
 ### 관광객-현지인 매칭
 
 - 여행객 소개글 및 여행 정보 입력 화면 구성
@@ -63,11 +81,15 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - 매칭 상태를 `pending`, `accepted` 등으로 관리할 수 있는 백엔드 도메인 구조 설계
 - 매칭 수락 이후 채팅방 생성으로 이어지는 서비스 흐름 구현 기반 마련
 
+<br>
+
 ### 채팅
 
 - 채팅방 및 메시지 모델 구성
 - 채팅 목록/상세 화면 구현
 - Firestore 기반 실시간 메시지 동기화를 고려한 데이터 구조 설계
+
+<br>
 
 ### 커뮤니티 및 커머스
 
@@ -75,7 +97,11 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - 구매 대행 화면과 결제/리뷰/구매 요청 모델 구성
 - 여행 중 필요한 현지 도움 요청까지 확장 가능한 서비스 구조 설계
 
+<br>
+
 ## 기술 스택
+
+<br>
 
 ### Frontend
 
@@ -88,6 +114,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - Image Picker
 - HTTP Client
 
+<br>
+
 ### Backend
 
 - Node.js 22
@@ -95,6 +123,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - Firebase Admin SDK
 - Firebase Functions SDK
 - ESLint
+
+<br>
 
 ### Infrastructure
 
@@ -104,6 +134,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 - Firebase Emulator Suite
 - Firestore Security Rules
 - Storage Security Rules
+
+<br>
 
 ## 아키텍처
 
@@ -125,6 +157,8 @@ Firebase Storage
 ```
 
 프론트엔드는 Flutter 단일 코드베이스로 구성되어 웹을 중심으로 동작하며, Firebase Hosting을 통해 배포됩니다. 백엔드는 Cloud Functions에서 독립적인 API로 관리되고, 데이터는 Cloud Firestore와 Firebase Storage에 저장됩니다.
+
+<br>
 
 ## 프로젝트 구조
 
@@ -167,6 +201,8 @@ localit_develop/
 └── cors.json                    # Storage CORS 설정
 ```
 
+<br>
+
 ## Cloud Functions API
 
 현재 `functions/index.js`에서 등록된 HTTPS Function은 다음과 같습니다.
@@ -180,7 +216,11 @@ localit_develop/
 `functions/controller`와 `functions/domain`에는 매칭, 채팅, 여행객 소개글 기능 확장을 위한 컨트롤러와 도메인 로직이 분리되어 있습니다.
 
 
+<br>
+
 ## 실행 방법
+
+<br>
 
 ### Flutter Web
 
@@ -190,6 +230,8 @@ flutter pub get
 flutter run -d chrome
 ```
 
+<br>
+
 ### Firebase Functions Emulator
 
 ```bash
@@ -197,6 +239,8 @@ cd functions
 npm install
 npm run serve
 ```
+
+<br>
 
 ### Firebase 배포
 
@@ -217,6 +261,8 @@ cd functions
 npm run deploy
 ```
 
+<br>
+
 ## Firebase 설정 요약
 
 `firebase.json`에서 다음 리소스를 함께 관리합니다.
@@ -228,6 +274,8 @@ npm run deploy
 - `storage`: `storage.rules` 적용
 - `emulators`: Functions, Firestore, Storage 로컬 테스트 포트 관리
 
+<br>
+
 ## 담당 역할
 
 - Flutter Web 기반 프론트엔드 화면 및 라우팅 구현
@@ -236,6 +284,8 @@ npm run deploy
 - Firestore 컬렉션 구조와 공유 스키마 설계
 - Firebase Hosting 배포 설정 및 SPA 리라우팅 구성
 - Firebase 보안 규칙, Emulator, 배포 설정 관리
+
+<br>
 
 ## 프로젝트 의의
 
