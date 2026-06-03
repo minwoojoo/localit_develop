@@ -31,6 +31,8 @@ LocalIt은 여행객과 현지인을 연결해 현지 경험, 동행, 구매 대
 
 실제 Firebase Hosting 배포 웹을 실행한 뒤 캡처 및 녹화한 화면입니다.
 
+배포 링크: [https://localit-ef984.firebaseapp.com/](https://localit-ef984.firebaseapp.com/)
+
 <br>
 
 ### 주요 화면
